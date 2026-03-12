@@ -4,295 +4,1546 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Bartender Settlement Pro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
   <style>
-    :root{
-      --bg:#07090d;--card:#12161c;--card-2:#171c24;--muted:#97a3b6;--text:#f4f7fb;
-      --accent:#16b8f3;--accent-2:#0ea5e9;--green:#22c55e;--orange:#f59e0b;--red:#ef4444;
-      --border:#253041;--chip:#1c2430;--shadow:0 10px 30px rgba(0,0,0,.28);--radius:20px;
+    /* ─── DESIGN TOKENS ─────────────────────────────── */
+    :root {
+      --bg:             #07090d;
+      --surface:        #0f1318;
+      --surface-2:      #131820;
+      --surface-3:      #171e28;
+      --border:         #1e2b3a;
+      --border-subtle:  #14202e;
+
+      --text:           #eef4fb;
+      --text-muted:     #8a9ab0;
+      --text-dim:       #4e6070;
+
+      --accent:         #16b8f3;
+      --accent-dark:    #0ea5e9;
+      --accent-glow:    rgba(22, 184, 243, 0.14);
+
+      --green:          #22c55e;
+      --orange:         #f59e0b;
+      --red:            #ef4444;
+
+      --radius-sm:      10px;
+      --radius-md:      14px;
+      --radius-lg:      20px;
+
+      --shadow:         0 8px 32px rgba(0, 0, 0, 0.32);
+
+      --transition:     140ms ease;
+      --font:           'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono:      'DM Mono', 'Menlo', 'Consolas', monospace;
     }
-    *{box-sizing:border-box} body{margin:0;background:linear-gradient(180deg,#05070b 0%,#0b1017 100%);
-      color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Arial,sans-serif;min-height:100vh}
-    .app{max-width:1100px;margin:0 auto;padding:18px 14px 110px} h1,h2,h3,p{margin:0}
-    .hero{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:16px;flex-wrap:wrap}
-    .hero h1{font-size:clamp(34px,7vw,62px);letter-spacing:-.03em;line-height:.95;margin-bottom:8px}
-    .subtitle{color:var(--muted);max-width:680px;line-height:1.45;font-size:14px}
-    .session-strip{background:rgba(22,184,243,.12);border:1px solid rgba(22,184,243,.28);color:#dff7ff;border-radius:16px;
-      padding:12px 14px;font-size:13px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;box-shadow:var(--shadow);margin-bottom:16px}
-    .grid{display:grid;grid-template-columns:1.05fr .95fr;gap:16px} @media (max-width:940px){.grid{grid-template-columns:1fr}}
-    .card{background:linear-gradient(180deg,var(--card) 0%,var(--card-2) 100%);border:1px solid var(--border);
-      border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
-    .section-title{font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:#c6d2e3;margin-bottom:14px}
-    .stack{display:grid;gap:12px}.row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-    @media (max-width:650px){.row-2,.row-3{grid-template-columns:1fr}}
-    label{display:block;font-size:12px;color:var(--muted);margin-bottom:8px;letter-spacing:.03em}
-    input,select,textarea{width:100%;border:none;outline:none;background:#edf3f8;color:#1b2430;padding:16px 16px;border-radius:16px;font-size:16px;min-height:56px}
-    textarea{min-height:90px;resize:vertical}.default-input{background:linear-gradient(180deg,#dce4ec 0%,#cfd9e4 100%);color:#1c2430;box-shadow: inset 0 0 0 2px rgba(68,84,105,.08)}
-    .hint{margin-top:6px;font-size:11px;color:var(--muted)}
-    .mode-toggle{display:flex;background:#0b121a;border:1px solid var(--border);border-radius:16px;padding:4px;gap:6px}
-    .mode-toggle button{flex:1;border:none;background:transparent;color:#c4d2e5;padding:12px;border-radius:12px;font-size:13px;cursor:pointer}
-    .mode-toggle button.active{background:var(--accent);color:white;font-weight:700}
-    .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}.chip{border:none;background:var(--chip);color:#d9e5f5;border:1px solid var(--border);border-radius:999px;padding:10px 13px;font-size:13px;cursor:pointer}
-    .result-box{background:#0b1218;border:1px solid var(--border);border-radius:18px;padding:16px;display:grid;gap:12px}
-    .big-pay{font-size:44px;font-weight:800;letter-spacing:-.03em;color:#fff;line-height:1}
-    .mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .metric{background:#121923;border:1px solid var(--border);border-radius:16px;padding:12px}.metric .k{color:var(--muted);font-size:12px;margin-bottom:4px}.metric .v{font-size:24px;font-weight:800;letter-spacing:-.02em}
-    .positive{color:var(--green)} .warning{color:var(--orange)} .negative{color:var(--red)}
-    .actions{position:sticky;bottom:8px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px;z-index:10}
-    @media (max-width:850px){.actions{grid-template-columns:1fr 1fr}} @media (max-width:520px){.actions{grid-template-columns:1fr}}
-    button.primary, button.secondary, button.ghost, button.warn{border:none;min-height:56px;border-radius:16px;padding:14px 16px;font-size:16px;font-weight:700;cursor:pointer;box-shadow:var(--shadow)}
-    .primary{background:linear-gradient(180deg,var(--accent) 0%,var(--accent-2) 100%); color:white}.secondary{background:#182230; color:#e8f1fc; border:1px solid var(--border)}
-    .ghost{background:#0f141b; color:#d6e4f6; border:1px solid var(--border)} .warn{background:#3c2411; color:#ffd7ab; border:1px solid #744117}
-    .summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px} @media (max-width:760px){.summary-grid{grid-template-columns:1fr 1fr}} @media (max-width:520px){.summary-grid{grid-template-columns:1fr}}
-    .table-wrap{overflow:auto;border:1px solid var(--border);border-radius:16px;background:#0b1218}
-    table{width:100%;border-collapse:collapse;min-width:840px} th,td{padding:12px 10px;border-bottom:1px solid #1a2430;text-align:left;font-size:13px;vertical-align:top}
-    th{color:#b4c1d3;font-weight:600;background:#0e151e;position:sticky;top:0} td{color:#eef4fb} tr:hover td{background:#101722}
-    .tiny{font-size:12px;color:var(--muted)} .badge{display:inline-block;padding:6px 10px;border-radius:999px;font-size:11px;background:#152130;color:#d9e9fb;border:1px solid var(--border)}
-    .receipt{background:#0b1218;border:1px solid var(--border);border-radius:16px;padding:16px;line-height:1.65;white-space:pre-wrap;font-size:14px;color:#edf5ff}
-    .muted{color:var(--muted)} .small{font-size:12px}
+
+    /* ─── RESET & BASE ──────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 15px;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    h1, h2, h3 { line-height: 1; }
+
+    /* ─── LAYOUT ────────────────────────────────────── */
+    .app {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 24px 16px 120px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    @media (max-width: 940px) { .grid { grid-template-columns: 1fr; } }
+
+    .stack { display: grid; gap: 14px; }
+
+    .row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 650px) { .row-2 { grid-template-columns: 1fr; } }
+
+    /* ─── HERO ──────────────────────────────────────── */
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .hero__title {
+      font-size: clamp(36px, 7vw, 62px);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 0.95;
+      margin-bottom: 10px;
+    }
+
+    .hero__subtitle {
+      color: var(--text-muted);
+      font-size: 13px;
+      max-width: 480px;
+      line-height: 1.55;
+    }
+
+    /* ─── SESSION STRIP ─────────────────────────────── */
+    .session-strip {
+      background: var(--accent-glow);
+      border: 1px solid rgba(22, 184, 243, 0.22);
+      border-radius: var(--radius-md);
+      color: #d8f4ff;
+      padding: 12px 16px;
+      font-size: 13px;
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .session-strip strong { font-weight: 600; }
+
+    /* ─── CARD ──────────────────────────────────────── */
+    .card {
+      background: linear-gradient(160deg, var(--surface) 0%, var(--surface-2) 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 16px;
+    }
+
+    /* ─── FORM CONTROLS ─────────────────────────────── */
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 7px;
+      letter-spacing: 0.02em;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.055);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 15px;
+      min-height: 52px;
+      outline: none;
+      padding: 14px 16px;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    input::placeholder,
+    textarea::placeholder { color: var(--text-dim); }
+
+    /* Soft "default / editable" styling */
+    input.is-default,
+    select.is-default {
+      background: rgba(180, 210, 240, 0.07);
+      border-color: rgba(120, 160, 200, 0.2);
+      color: #b8cfea;
+    }
+
+    select option { background: var(--surface-2); color: var(--text); }
+    textarea { min-height: 90px; resize: vertical; }
+
+    .hint {
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--text-dim);
+      line-height: 1.45;
+    }
+
+    /* ─── MODE TOGGLE ───────────────────────────────── */
+    .mode-toggle {
+      display: flex;
+      background: rgba(0, 0, 0, 0.28);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 4px;
+      gap: 4px;
+    }
+
+    .mode-toggle__btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 500;
+      min-height: 42px;
+      padding: 9px 12px;
+      transition: background var(--transition), color var(--transition);
+    }
+
+    .mode-toggle__btn.active { background: var(--accent); color: #fff; font-weight: 600; }
+    .mode-toggle__btn:not(.active):hover { background: rgba(255,255,255,0.05); }
+
+    /* ─── CHIPS ─────────────────────────────────────── */
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+
+    .chip {
+      background: var(--surface-3);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: #b8cce0;
+      cursor: pointer;
+      font-family: var(--font);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 6px 12px;
+      transition: background var(--transition), border-color var(--transition);
+    }
+
+    .chip:hover { background: var(--border); border-color: var(--text-dim); }
+
+    /* ─── RESULT BOX ────────────────────────────────── */
+    .result-box {
+      background: rgba(0, 0, 0, 0.32);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+    }
+
+    .result-box__label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .big-pay {
+      font-size: 52px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      color: #fff;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .mini-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .metric {
+      background: var(--surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+    }
+
+    .metric__label {
+      color: var(--text-dim);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+    }
+
+    .metric__value {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ─── STATUS COLORS ─────────────────────────────── */
+    .positive { color: var(--green); }
+    .warning  { color: var(--orange); }
+    .negative { color: var(--red); }
+
+    /* ─── SUMMARY GRID ──────────────────────────────── */
+    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+
+    @media (max-width: 760px) { .summary-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 520px) { .summary-grid { grid-template-columns: 1fr; } }
+
+    /* ─── TABLE ─────────────────────────────────────── */
+    .table-wrap {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      overflow: auto;
+    }
+
+    table { width: 100%; border-collapse: collapse; min-width: 820px; }
+
+    th, td {
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 13px;
+      padding: 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: var(--surface-2);
+      color: var(--text-muted);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      position: sticky;
+      text-transform: uppercase;
+      top: 0;
+    }
+
+    td { color: var(--text); }
+
+    tr:hover td { background: rgba(255, 255, 255, 0.022); }
+    tr:last-child td { border-bottom: none; }
+
+    .text-secondary { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+    .badge {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: #b8d0ee;
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      padding: 4px 10px;
+    }
+
+    /* ─── RECEIPT ───────────────────────────────────── */
+    .receipt {
+      background: rgba(0, 0, 0, 0.28);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: #ddeeff;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      line-height: 1.7;
+      padding: 16px;
+      white-space: pre-wrap;
+    }
+
+    /* ─── BUTTONS ───────────────────────────────────── */
+    .btn {
+      align-items: center;
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      display: inline-flex;
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      justify-content: center;
+      min-height: 50px;
+      padding: 12px 18px;
+      transition: filter var(--transition), transform var(--transition), background var(--transition);
+    }
+
+    .btn:active { transform: translateY(1px); }
+
+    .btn--primary {
+      background: linear-gradient(160deg, var(--accent) 0%, var(--accent-dark) 100%);
+      box-shadow: 0 4px 18px rgba(22, 184, 243, 0.26);
+      color: #fff;
+    }
+    .btn--primary:hover { filter: brightness(1.1); }
+
+    .btn--secondary {
+      background: var(--surface-3);
+      border: 1px solid var(--border);
+      color: #cde0f4;
+    }
+    .btn--secondary:hover { background: var(--border); }
+
+    .btn--ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: #b4c8e0;
+    }
+    .btn--ghost:hover { background: rgba(255, 255, 255, 0.04); }
+
+    .btn--warn {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.32);
+      color: #ffc8c8;
+    }
+    .btn--warn:hover { background: rgba(239, 68, 68, 0.18); }
+
+    /* ─── ACTION ROW ────────────────────────────────── */
+    .action-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    @media (max-width: 850px) { .action-row { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 520px) { .action-row { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
-  <div class="app">
-    <div class="hero">
-      <div>
-        <h1>Bartender Settlement</h1>
-        <div class="subtitle">Full GitHub-ready version with session setup, editable gray defaults, till float logic, receipt preview, bartender/office email buttons, tonight summary, history, presets, and JSON import/export.</div>
-      </div>
-      <div class="badge">Local-only • Mailto email • History saved in browser</div>
-    </div>
-    <div id="sessionStrip" class="session-strip">No active night yet. Start a session below.</div>
-    <div class="grid">
-      <div class="stack">
-        <div class="card">
-          <div class="section-title">Start Night / Active Session</div>
-          <div class="row-2">
-            <div><label>Date</label><input id="sessionDate" class="default-input" type="date"></div>
-            <div><label>Venue Name</label><input id="sessionVenue" class="default-input" placeholder="Harbour / VIP / Festival Venue"></div>
-          </div>
-          <div class="row-2">
-            <div><label>Event / Shift</label><input id="sessionEvent" class="default-input" placeholder="Latin Night / Friday Shift"></div>
-            <div><label>Default Venue Cut %</label><input id="sessionCut" class="default-input" type="number" step="0.01" placeholder="5"></div>
-          </div>
-          <div class="row-2">
-            <div><label>Default Till Float</label><input id="sessionFloat" class="default-input" type="number" step="0.01" placeholder="100"></div>
-            <div><label>Office Email</label><input id="officeEmail" class="default-input" type="email" placeholder="office@example.com"></div>
-          </div>
-          <div class="row-2">
-            <div><label>CC Email (optional)</label><input id="ccEmail" class="default-input" type="email" placeholder="manager@example.com"></div>
-            <div><label>Session Notes</label><input id="sessionNotes" class="default-input" placeholder="Optional note for tonight"></div>
-          </div>
-          <div class="actions" style="position:static;margin-top:12px">
-            <button class="primary" onclick="startNight()">Start / Update Night</button>
-            <button class="secondary" onclick="closeNight()">Close Night</button>
-            <button class="ghost" onclick="loadLastNight()">Load Last Session</button>
-            <button class="ghost" onclick="resetFormOnly()">Reset Form</button>
-          </div>
-        </div>
+  <main class="app">
 
-        <div class="card">
-          <div class="section-title">Bartender / Till Entry</div>
+    <!-- HERO -->
+    <header class="hero">
+      <div>
+        <h1 class="hero__title">Bartender<br>Settlement</h1>
+        <p class="hero__subtitle">Multi-venue bar settlement manager with till float logic, preset bartenders, receipt preview, and JSON import/export.</p>
+      </div>
+      <span class="badge">Local-only · History in browser</span>
+    </header>
+
+    <!-- SESSION STATUS STRIP -->
+    <div id="js-session-strip" class="session-strip" role="status" aria-live="polite">
+      No active night yet. Start a session below.
+    </div>
+
+    <!-- MAIN GRID -->
+    <div class="grid">
+
+      <!-- ── LEFT COLUMN ── -->
+      <div class="stack">
+
+        <!-- NIGHT SESSION -->
+        <section class="card" aria-labelledby="label-session">
+          <div id="label-session" class="section-title">Night Session</div>
+          <div class="row-2">
+            <div>
+              <label for="sessionDate">Date</label>
+              <input id="sessionDate" class="is-default" type="date">
+            </div>
+            <div>
+              <label for="sessionVenue">Venue Name</label>
+              <input id="sessionVenue" class="is-default" type="text" placeholder="Harbour / Theater / Festival">
+            </div>
+          </div>
+          <div class="row-2">
+            <div>
+              <label for="sessionEvent">Event / Shift</label>
+              <input id="sessionEvent" class="is-default" type="text" placeholder="Latin Night / Friday Shift">
+            </div>
+            <div>
+              <label for="sessionCut">Default Venue Cut %</label>
+              <input id="sessionCut" class="is-default" type="number" step="0.01" placeholder="5">
+            </div>
+          </div>
+          <div class="row-2">
+            <div>
+              <label for="sessionFloat">Default Till Float ($)</label>
+              <input id="sessionFloat" class="is-default" type="number" step="0.01" placeholder="100">
+            </div>
+            <div>
+              <label for="officeEmail">Office Email</label>
+              <input id="officeEmail" class="is-default" type="email" placeholder="office@example.com">
+            </div>
+          </div>
+          <div class="row-2">
+            <div>
+              <label for="ccEmail">CC Email (optional)</label>
+              <input id="ccEmail" class="is-default" type="email" placeholder="manager@example.com">
+            </div>
+            <div>
+              <label for="sessionNotes">Session Notes</label>
+              <input id="sessionNotes" class="is-default" type="text" placeholder="Optional note for tonight">
+            </div>
+          </div>
+          <div class="action-row">
+            <button class="btn btn--primary"    id="js-btn-start-night">Start / Update Night</button>
+            <button class="btn btn--secondary"  id="js-btn-close-night">Close Night</button>
+            <button class="btn btn--ghost"      id="js-btn-load-last">Load Last Session</button>
+            <button class="btn btn--ghost"      id="js-btn-reset-form">Reset Form</button>
+          </div>
+        </section>
+
+        <!-- BARTENDER / TILL ENTRY -->
+        <section class="card" aria-labelledby="label-entry">
+          <div id="label-entry" class="section-title">Bartender / Till Entry</div>
+
           <div>
             <label>Workflow Mode</label>
             <div class="mode-toggle">
-              <button id="modeSeparate" class="active" onclick="setTipMode('separate')">Tips entered separately</button>
-              <button id="modeIncluded" onclick="setTipMode('included')">Tips included in till</button>
+              <button class="mode-toggle__btn active" id="js-mode-separate" data-mode="separate">Tips entered separately</button>
+              <button class="mode-toggle__btn"        id="js-mode-included" data-mode="included">Tips included in till</button>
             </div>
-            <div class="hint">Use separate when bartender tells you tips directly. Use included when the till amount includes tips and cash together.</div>
-          </div>
-
-          <div class="row-2" style="margin-top:12px">
-            <div><label>Bartender Preset</label><select id="presetSelect" class="default-input" onchange="applyPreset()"><option value="">Choose preset…</option></select></div>
-            <div><label>Payment Method</label><select id="paymentMethod" class="default-input"><option>cash</option><option>e-transfer</option><option>mixed</option><option>not paid yet</option></select></div>
-          </div>
-
-          <div class="row-2">
-            <div><label>Bartender Name</label><input id="bartenderName" placeholder="Ali / Sara / Mike"></div>
-            <div><label>Station / Bar</label><input id="station" placeholder="VIP / Bar 1 / Patio"></div>
+            <p class="hint">Use <em>separate</em> when the bartender tells you tips directly. Use <em>included</em> when the till amount already contains tips and cash together.</p>
           </div>
 
           <div class="row-2">
             <div>
-              <label>Usual Wage <span class="tiny">(gray default but editable)</span></label>
-              <input id="wage" class="default-input" type="number" step="0.01" placeholder="180">
-              <div class="chips">
-                <button class="chip" onclick="fillField('wage',120)">120</button>
-                <button class="chip" onclick="fillField('wage',150)">150</button>
-                <button class="chip" onclick="fillField('wage',180)">180</button>
-                <button class="chip" onclick="fillField('wage',200)">200</button>
+              <label for="presetSelect">Bartender Preset</label>
+              <select id="presetSelect" class="is-default">
+                <option value="">Choose preset…</option>
+              </select>
+            </div>
+            <div>
+              <label for="paymentMethod">Payment Method</label>
+              <select id="paymentMethod" class="is-default">
+                <option value="cash">Cash</option>
+                <option value="e-transfer">E-Transfer</option>
+                <option value="mixed">Mixed</option>
+                <option value="not paid yet">Not Paid Yet</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row-2">
+            <div>
+              <label for="bartenderName">Bartender Name</label>
+              <input id="bartenderName" type="text" placeholder="Ali / Sara / Mike">
+            </div>
+            <div>
+              <label for="station">Station / Bar</label>
+              <input id="station" type="text" placeholder="VIP / Bar 1 / Patio">
+            </div>
+          </div>
+
+          <div class="row-2">
+            <div>
+              <label for="wage">Wage <span style="font-weight:400;color:var(--text-dim)">(editable default)</span></label>
+              <input id="wage" class="is-default" type="number" step="0.01" placeholder="180">
+              <div class="chips" id="js-wage-chips">
+                <button class="chip" data-wage="120">$120</button>
+                <button class="chip" data-wage="150">$150</button>
+                <button class="chip" data-wage="180">$180</button>
+                <button class="chip" data-wage="200">$200</button>
               </div>
             </div>
-            <div><label>Bartender Email</label><input id="bartenderEmail" class="default-input" type="email" placeholder="staff@example.com"></div>
-          </div>
-
-          <div class="row-2">
-            <div><label>Tips</label><input id="tips" type="number" step="0.01" placeholder="400"></div>
-            <div><label>Venue Cut % <span class="tiny">(gray default but editable)</span></label><input id="venueCut" class="default-input" type="number" step="0.01" placeholder="5"></div>
-          </div>
-
-          <div class="row-2">
-            <div><label>Till Start <span class="tiny">(gray default but editable)</span></label><input id="tillStart" class="default-input" type="number" step="0.01" placeholder="100"></div>
-            <div><label>Till Returned</label><input id="tillReturned" type="number" step="0.01" placeholder="352"></div>
-          </div>
-
-          <div class="row-2">
-            <div><label>Manual Adjustment (+/-)</label><input id="manualAdjustment" type="number" step="0.01" placeholder="0"><div class="hint">Optional extra adjustment to final pay.</div></div>
-            <div><label>Note</label><input id="entryNote" placeholder="Short note if needed"></div>
-          </div>
-
-          <div class="actions" style="position:static;margin-top:12px">
-            <button class="primary" onclick="saveSettlement()">Save Settlement</button>
-            <button class="secondary" onclick="duplicateLast()">Duplicate Last</button>
-            <button class="ghost" onclick="populateDemo()">Demo Data</button>
-            <button class="warn" onclick="clearEntry()">Clear Entry</button>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="section-title">Tonight Summary</div>
-          <div class="summary-grid" id="summaryGrid"></div>
-          <div class="actions" style="position:static;margin-top:12px">
-            <button class="secondary" onclick="emailOfficeReport()">Email Office Report</button>
-            <button class="ghost" onclick="exportCurrentNight()">Export Current Night JSON</button>
-            <button class="ghost" onclick="exportHistory()">Export Full History JSON</button>
-            <label class="ghost" style="display:flex;align-items:center;justify-content:center;cursor:pointer">Import JSON<input id="importInput" type="file" accept=".json,application/json" onchange="importJson(event)" style="display:none"></label>
-          </div>
-        </div>
-      </div>
-
-      <div class="stack">
-        <div class="card">
-          <div class="section-title">Live Calculator Result</div>
-          <div class="result-box">
-            <div class="muted small">Final amount to pay bartender</div>
-            <div id="bigPay" class="big-pay">$0.00</div>
-            <div class="mini-grid">
-              <div class="metric"><div class="k">Venue Cut Amount</div><div class="v" id="venueCutAmount">$0.00</div></div>
-              <div class="metric"><div class="k">Tip Payout</div><div class="v" id="tipPayout">$0.00</div></div>
-              <div class="metric"><div class="k">Till Difference</div><div class="v" id="tillDifference">$0.00</div></div>
-              <div class="metric"><div class="k">Estimated Cash Sales</div><div class="v" id="estimatedSales">$0.00</div></div>
-              <div class="metric"><div class="k">Wage</div><div class="v" id="wageOut">$0.00</div></div>
-              <div class="metric"><div class="k">Manual Adjustment</div><div class="v" id="adjOut">$0.00</div></div>
+            <div>
+              <label for="bartenderEmail">Bartender Email</label>
+              <input id="bartenderEmail" class="is-default" type="email" placeholder="staff@example.com">
             </div>
-            <div class="hint">Estimated Cash Sales is only meaningful when tips are included in till.</div>
           </div>
-        </div>
 
-        <div class="card">
-          <div class="section-title">Receipt Preview</div>
-          <div id="receiptPreview" class="receipt">No settlement yet.</div>
-          <div class="actions" style="position:static;margin-top:12px">
-            <button class="secondary" onclick="emailBartenderCopy()">Email Bartender Copy</button>
-            <button class="ghost" onclick="copyReceipt()">Copy Receipt</button>
-            <button class="ghost" onclick="printReceipt()">Print Receipt</button>
-            <button class="ghost" onclick="savePreset()">Save / Update Preset</button>
+          <div class="row-2">
+            <div>
+              <label for="tips">Tips ($)</label>
+              <input id="tips" type="number" step="0.01" placeholder="400">
+            </div>
+            <div>
+              <label for="venueCut">Venue Cut % <span style="font-weight:400;color:var(--text-dim)">(editable default)</span></label>
+              <input id="venueCut" class="is-default" type="number" step="0.01" placeholder="5">
+            </div>
           </div>
-        </div>
 
-        <div class="card">
-          <div class="section-title">History</div>
+          <div class="row-2">
+            <div>
+              <label for="tillStart">Till Start <span style="font-weight:400;color:var(--text-dim)">(editable default)</span></label>
+              <input id="tillStart" class="is-default" type="number" step="0.01" placeholder="100">
+            </div>
+            <div>
+              <label for="tillReturned">Till Returned ($)</label>
+              <input id="tillReturned" type="number" step="0.01" placeholder="352">
+            </div>
+          </div>
+
+          <div class="row-2">
+            <div>
+              <label for="manualAdjustment">Manual Adjustment (+/−)</label>
+              <input id="manualAdjustment" type="number" step="0.01" placeholder="0">
+              <p class="hint">Optional amount added to or subtracted from final pay.</p>
+            </div>
+            <div>
+              <label for="entryNote">Note</label>
+              <input id="entryNote" type="text" placeholder="Short note if needed">
+            </div>
+          </div>
+
+          <div class="action-row">
+            <button class="btn btn--primary"   id="js-btn-save-settlement">Save Settlement</button>
+            <button class="btn btn--secondary" id="js-btn-duplicate-last">Duplicate Last</button>
+            <button class="btn btn--ghost"     id="js-btn-demo">Demo Data</button>
+            <button class="btn btn--warn"      id="js-btn-clear-entry">Clear Entry</button>
+          </div>
+        </section>
+
+        <!-- TONIGHT SUMMARY -->
+        <section class="card" aria-labelledby="label-summary">
+          <div id="label-summary" class="section-title">Tonight Summary</div>
+          <div class="summary-grid" id="js-summary-grid"></div>
+          <div class="action-row">
+            <button class="btn btn--secondary" id="js-btn-email-office">Email Office Report</button>
+            <button class="btn btn--ghost"     id="js-btn-export-night">Export Tonight JSON</button>
+            <button class="btn btn--ghost"     id="js-btn-export-history">Export Full History</button>
+            <label class="btn btn--ghost" style="cursor:pointer">
+              Import JSON
+              <input id="js-import-input" type="file" accept=".json,application/json" style="display:none">
+            </label>
+          </div>
+        </section>
+
+      </div><!-- /left column -->
+
+      <!-- ── RIGHT COLUMN ── -->
+      <div class="stack">
+
+        <!-- LIVE CALCULATOR -->
+        <section class="card" aria-labelledby="label-calculator">
+          <div id="label-calculator" class="section-title">Live Calculator</div>
+          <div class="result-box">
+            <p class="result-box__label">Final amount to pay bartender</p>
+            <div id="js-big-pay" class="big-pay">$0.00</div>
+            <div class="mini-grid">
+              <div class="metric">
+                <div class="metric__label">Venue Cut Amount</div>
+                <div class="metric__value" id="js-venue-cut-amount">$0.00</div>
+              </div>
+              <div class="metric">
+                <div class="metric__label">Tip Payout</div>
+                <div class="metric__value" id="js-tip-payout">$0.00</div>
+              </div>
+              <div class="metric">
+                <div class="metric__label">Till Difference</div>
+                <div class="metric__value" id="js-till-difference">$0.00</div>
+              </div>
+              <div class="metric">
+                <div class="metric__label">Est. Cash Sales</div>
+                <div class="metric__value" id="js-estimated-sales">$0.00</div>
+              </div>
+              <div class="metric">
+                <div class="metric__label">Wage</div>
+                <div class="metric__value" id="js-wage-out">$0.00</div>
+              </div>
+              <div class="metric">
+                <div class="metric__label">Manual Adjustment</div>
+                <div class="metric__value" id="js-adj-out">$0.00</div>
+              </div>
+            </div>
+            <p class="hint">Estimated Cash Sales is only meaningful when tips are included in the till.</p>
+          </div>
+        </section>
+
+        <!-- RECEIPT PREVIEW -->
+        <section class="card" aria-labelledby="label-receipt">
+          <div id="label-receipt" class="section-title">Receipt Preview</div>
+          <div id="js-receipt-preview" class="receipt" role="document">No settlement yet.</div>
+          <div class="action-row">
+            <button class="btn btn--secondary" id="js-btn-email-bartender">Email Bartender Copy</button>
+            <button class="btn btn--ghost"     id="js-btn-copy-receipt">Copy Receipt</button>
+            <button class="btn btn--ghost"     id="js-btn-print-receipt">Print Receipt</button>
+            <button class="btn btn--ghost"     id="js-btn-save-preset">Save Preset</button>
+          </div>
+        </section>
+
+        <!-- HISTORY -->
+        <section class="card" aria-labelledby="label-history">
+          <div id="label-history" class="section-title">History</div>
           <div class="table-wrap">
             <table>
               <thead>
-                <tr><th>Date</th><th>Bartender</th><th>Station</th><th>Final Pay</th><th>Till Diff</th><th>Mode</th><th>Actions</th></tr>
+                <tr>
+                  <th scope="col">Date</th>
+                  <th scope="col">Bartender</th>
+                  <th scope="col">Station</th>
+                  <th scope="col">Final Pay</th>
+                  <th scope="col">Till Diff</th>
+                  <th scope="col">Mode</th>
+                  <th scope="col">Actions</th>
+                </tr>
               </thead>
-              <tbody id="historyBody"></tbody>
+              <tbody id="js-history-body"></tbody>
             </table>
           </div>
-        </div>
-      </div>
-    </div>
-  </div>
+        </section>
+
+      </div><!-- /right column -->
+
+    </div><!-- /grid -->
+  </main>
 
   <script>
-    const STORAGE_KEYS={session:'bs_session_v1',history:'bs_history_v1',presets:'bs_presets_v1'};
-    let tipMode='separate'; let currentCalc=null; let editingId=null;
-    const money=n=>'$'+(Number(n||0)).toFixed(2);
-    function todayLocal(){const d=new Date();const tz=d.getTimezoneOffset();const local=new Date(d.getTime()-tz*60000);return local.toISOString().slice(0,10)}
-    function getSession(){return JSON.parse(localStorage.getItem(STORAGE_KEYS.session)||'null')}
-    function setSession(obj){localStorage.setItem(STORAGE_KEYS.session,JSON.stringify(obj));renderSessionStrip()}
-    function getHistory(){return JSON.parse(localStorage.getItem(STORAGE_KEYS.history)||'[]')}
-    function setHistory(items){localStorage.setItem(STORAGE_KEYS.history,JSON.stringify(items));renderHistory();renderSummary()}
-    function getPresets(){return JSON.parse(localStorage.getItem(STORAGE_KEYS.presets)||'[]')}
-    function setPresets(items){localStorage.setItem(STORAGE_KEYS.presets,JSON.stringify(items));renderPresetOptions()}
-    function setTipMode(mode){tipMode=mode;document.getElementById('modeSeparate').classList.toggle('active',mode==='separate');document.getElementById('modeIncluded').classList.toggle('active',mode==='included');liveCalculate()}
-    function startNight(){const session={date:document.getElementById('sessionDate').value||todayLocal(),venue:document.getElementById('sessionVenue').value.trim(),event:document.getElementById('sessionEvent').value.trim(),defaultCut:Number(document.getElementById('sessionCut').value||0),defaultFloat:Number(document.getElementById('sessionFloat').value||0),officeEmail:document.getElementById('officeEmail').value.trim(),ccEmail:document.getElementById('ccEmail').value.trim(),notes:document.getElementById('sessionNotes').value.trim(),closedAt:null};setSession(session);applySessionDefaultsToEntry();alert('Night session saved.')}
-    function closeNight(){const s=getSession();if(!s){alert('No active session.');return;}s.closedAt=new Date().toISOString();setSession(s);alert('Night marked as closed. Records remain saved.')}
-    function loadLastNight(){const s=getSession();if(!s){alert('No saved session found.');return;}hydrateSessionInputs(s);applySessionDefaultsToEntry();alert('Last session loaded.')}
-    function hydrateSessionInputs(s){document.getElementById('sessionDate').value=s.date||todayLocal();document.getElementById('sessionVenue').value=s.venue||'';document.getElementById('sessionEvent').value=s.event||'';document.getElementById('sessionCut').value=s.defaultCut??'';document.getElementById('sessionFloat').value=s.defaultFloat??'';document.getElementById('officeEmail').value=s.officeEmail||'';document.getElementById('ccEmail').value=s.ccEmail||'';document.getElementById('sessionNotes').value=s.notes||''}
-    function applySessionDefaultsToEntry(){const s=getSession();if(!s)return;if(!document.getElementById('venueCut').value)document.getElementById('venueCut').value=s.defaultCut??'';if(!document.getElementById('tillStart').value)document.getElementById('tillStart').value=s.defaultFloat??''}
-    function renderSessionStrip(){const s=getSession();const el=document.getElementById('sessionStrip');if(!s){el.textContent='No active night yet. Start a session below.';return;}const closed=s.closedAt?' • Closed':' • Active';el.innerHTML=`<strong>${s.event||'Untitled Event'}</strong><span>Venue: ${s.venue||'—'}</span><span>Date: ${s.date||'—'}</span><span>Default Float: ${money(s.defaultFloat)}</span><span>Cut: ${Number(s.defaultCut||0).toFixed(2)}%</span><span>${closed}</span>`}
-    function liveCalculate(){const wage=Number(document.getElementById('wage').value||0);const tips=Number(document.getElementById('tips').value||0);const cut=Number(document.getElementById('venueCut').value||0);const tillStart=Number(document.getElementById('tillStart').value||0);const tillReturned=Number(document.getElementById('tillReturned').value||0);const adj=Number(document.getElementById('manualAdjustment').value||0);
-      const venueCutAmount=tips*(cut/100);const tipPayout=tips-venueCutAmount;const tillDifference=tillReturned-tillStart;const estimatedSales=tipMode==='included'?(tillDifference-tips):tillDifference;const finalPay=wage+tipPayout+adj;
-      currentCalc={wage,tips,cut,tillStart,tillReturned,adj,venueCutAmount,tipPayout,tillDifference,estimatedSales,finalPay,tipMode};
-      document.getElementById('bigPay').textContent=money(finalPay);document.getElementById('venueCutAmount').textContent=money(venueCutAmount);document.getElementById('tipPayout').textContent=money(tipPayout);document.getElementById('wageOut').textContent=money(wage);document.getElementById('adjOut').textContent=money(adj);
-      const diffEl=document.getElementById('tillDifference');diffEl.textContent=money(tillDifference);diffEl.className='v '+(tillDifference>0?'positive':tillDifference<0?'negative':'');
-      const salesEl=document.getElementById('estimatedSales');salesEl.textContent=money(estimatedSales);salesEl.className='v '+(estimatedSales>0?'positive':estimatedSales<0?'warning':'');
-      updateReceiptPreview();return currentCalc}
-    function buildReceipt(calc){const s=getSession()||{};const name=document.getElementById('bartenderName').value.trim()||'—';const station=document.getElementById('station').value.trim()||'—';const payMethod=document.getElementById('paymentMethod').value;const note=document.getElementById('entryNote').value.trim();
-      return `Bartender Settlement Receipt
+    /**
+     * Bartender Settlement Pro
+     *
+     * Single-file HTML app for multi-venue bar settlement management.
+     * All data is stored locally in localStorage; email is sent via mailto:.
+     *
+     * Architecture:
+     *   STORAGE     — thin localStorage wrapper with JSON serialisation
+     *   CALCULATOR  — pure function; no side effects
+     *   RECEIPT     — pure string builder
+     *   DOM         — low-level DOM read/write helpers
+     *   SESSION     — session CRUD operations
+     *   SETTLEMENTS — settlement CRUD operations
+     *   PRESETS     — bartender preset CRUD
+     *   EMAIL       — mailto: generation
+     *   DATA_IO     — JSON import / export
+     *   UI          — all render functions
+     *   APP         — orchestration (calculate, tipMode, demo, clipboard, print)
+     *   init()      — bootstrap
+     */
+    (() => {
+      'use strict';
 
-Venue: ${s.venue||'—'}
-Event: ${s.event||'—'}
-Date: ${s.date||'—'}
+      /* ─────────────────────────────────────────────────
+         CONSTANTS
+      ───────────────────────────────────────────────── */
 
-Bartender: ${name}
-Station: ${station}
-Payment Method: ${payMethod}
-Tip Workflow: ${calc.tipMode==='separate'?'Tips entered separately':'Tips included in till'}
+      const STORAGE_KEYS = Object.freeze({
+        session: 'bs_session_v1',
+        history: 'bs_history_v1',
+        presets: 'bs_presets_v1',
+      });
 
-Tips Received: ${money(calc.tips)}
-Venue Cut %: ${calc.cut.toFixed(2)}%
-Venue Cut Amount: ${money(calc.venueCutAmount)}
-Tip Payout: ${money(calc.tipPayout)}
+      /** @enum {string} */
+      const TIP_MODE = Object.freeze({
+        SEPARATE: 'separate',
+        INCLUDED: 'included',
+      });
 
-Wage: ${money(calc.wage)}
-Manual Adjustment: ${money(calc.adj)}
-Final Amount to Pay Bartender: ${money(calc.finalPay)}
+      /* ─────────────────────────────────────────────────
+         MODULE STATE
+      ───────────────────────────────────────────────── */
 
-Till Float: ${money(calc.tillStart)}
-Till Returned: ${money(calc.tillReturned)}
-Till Difference: ${money(calc.tillDifference)}
-Estimated Cash Sales: ${money(calc.estimatedSales)}
+      const state = {
+        /** @type {'separate'|'included'} */
+        tipMode: TIP_MODE.SEPARATE,
+        /** @type {string|null} ID of the settlement currently being edited */
+        editingId: null,
+        /** @type {object|null} Result of the most recent calculation */
+        lastCalc: null,
+      };
 
-Session Note: ${s.notes||'—'}
-Entry Note: ${note||'—'}
-`}
-    function updateReceiptPreview(){const calc=currentCalc||liveCalculate();document.getElementById('receiptPreview').textContent=buildReceipt(calc)}
-    function saveSettlement(){const session=getSession();if(!session){alert('Start the night session first.');return;}const name=document.getElementById('bartenderName').value.trim();if(!name){alert('Enter bartender name.');return;}
-      const calc=liveCalculate();const item={id:editingId||(window.crypto&&crypto.randomUUID?crypto.randomUUID():String(Date.now())),sessionDate:session.date,venue:session.venue,event:session.event,bartenderName:name,bartenderEmail:document.getElementById('bartenderEmail').value.trim(),station:document.getElementById('station').value.trim(),paymentMethod:document.getElementById('paymentMethod').value,note:document.getElementById('entryNote').value.trim(),sessionOfficeEmail:session.officeEmail||'',sessionCcEmail:session.ccEmail||'',sessionNotes:session.notes||'',...calc,receipt:buildReceipt(calc),savedAt:new Date().toISOString()};
-      const items=getHistory();const idx=items.findIndex(x=>x.id===item.id);if(idx>=0)items[idx]=item;else items.unshift(item);setHistory(items);editingId=null;alert('Settlement saved.')}
-    function renderSummary(){const s=getSession();const all=getHistory();const list=s?all.filter(x=>x.sessionDate===s.date&&x.venue===s.venue&&x.event===s.event):[];const total=key=>list.reduce((a,b)=>a+Number(b[key]||0),0);
-      const summary=[['Settlements',list.length],['Total Tips',money(total('tips'))],['Venue Cut',money(total('venueCutAmount'))],['Tip Payout',money(total('tipPayout'))],['Total Wages',money(total('wage'))],['Total Paid Out',money(total('finalPay'))],['Total Float',money(total('tillStart'))],['Till Returned',money(total('tillReturned'))],['Till Difference',money(total('tillDifference'))]];
-      document.getElementById('summaryGrid').innerHTML=summary.map(([k,v])=>`<div class="metric"><div class="k">${k}</div><div class="v" style="font-size:22px">${v}</div></div>`).join('')}
-    function renderHistory(){const body=document.getElementById('historyBody');const items=getHistory();if(!items.length){body.innerHTML='<tr><td colspan="7" class="muted">No settlements saved yet.</td></tr>';return;}
-      body.innerHTML=items.map(item=>`<tr><td>${item.sessionDate}<div class="tiny">${item.event||''}</div></td><td>${item.bartenderName}<div class="tiny">${item.paymentMethod||''}</div></td><td>${item.station||'—'}</td><td>${money(item.finalPay)}</td><td class="${item.tillDifference>0?'positive':item.tillDifference<0?'negative':''}">${money(item.tillDifference)}</td><td><span class="badge">${item.tipMode}</span></td><td><button class="chip" onclick="editSettlement('${item.id}')">Edit</button> <button class="chip" onclick="duplicateSettlement('${item.id}')">Duplicate</button> <button class="chip" onclick="deleteSettlement('${item.id}')">Delete</button></td></tr>`).join('')}
-    function editSettlement(id){const item=getHistory().find(x=>x.id===id);if(!item)return;editingId=item.id;document.getElementById('bartenderName').value=item.bartenderName||'';document.getElementById('bartenderEmail').value=item.bartenderEmail||'';document.getElementById('station').value=item.station||'';document.getElementById('paymentMethod').value=item.paymentMethod||'cash';document.getElementById('wage').value=item.wage??'';document.getElementById('tips').value=item.tips??'';document.getElementById('venueCut').value=item.cut??'';document.getElementById('tillStart').value=item.tillStart??'';document.getElementById('tillReturned').value=item.tillReturned??'';document.getElementById('manualAdjustment').value=item.adj??'';document.getElementById('entryNote').value=item.note||'';setTipMode(item.tipMode||'separate');liveCalculate();alert('Loaded into form for editing.')}
-    function duplicateSettlement(id){const item=getHistory().find(x=>x.id===id);if(!item)return;editingId=null;document.getElementById('bartenderName').value=item.bartenderName||'';document.getElementById('bartenderEmail').value=item.bartenderEmail||'';document.getElementById('station').value=item.station||'';document.getElementById('paymentMethod').value=item.paymentMethod||'cash';document.getElementById('wage').value=item.wage??'';document.getElementById('tips').value=item.tips??'';document.getElementById('venueCut').value=item.cut??'';document.getElementById('tillStart').value=item.tillStart??'';document.getElementById('tillReturned').value=item.tillReturned??'';document.getElementById('manualAdjustment').value=item.adj??'';document.getElementById('entryNote').value=item.note||'';setTipMode(item.tipMode||'separate');liveCalculate()}
-    function duplicateLast(){const items=getHistory();if(!items.length){alert('No saved item to duplicate.');return;}duplicateSettlement(items[0].id)}
-    function deleteSettlement(id){if(!confirm('Delete this settlement?'))return;setHistory(getHistory().filter(x=>x.id!==id))}
-    function savePreset(){const name=document.getElementById('bartenderName').value.trim();if(!name){alert('Enter bartender name first.');return;}const preset={name,station:document.getElementById('station').value.trim(),wage:Number(document.getElementById('wage').value||0),email:document.getElementById('bartenderEmail').value.trim()};const presets=getPresets();const idx=presets.findIndex(p=>p.name.toLowerCase()===name.toLowerCase());if(idx>=0)presets[idx]=preset;else presets.push(preset);setPresets(presets);alert('Preset saved.')}
-    function renderPresetOptions(){const presets=getPresets();const select=document.getElementById('presetSelect');const current=select.value;select.innerHTML='<option value="">Choose preset…</option>'+presets.map(p=>`<option value="${escapeHtml(p.name)}">${escapeHtml(p.name)}</option>`).join('');select.value=current}
-    function applyPreset(){const name=document.getElementById('presetSelect').value;const p=getPresets().find(x=>x.name===name);if(!p)return;document.getElementById('bartenderName').value=p.name||'';document.getElementById('station').value=p.station||'';document.getElementById('wage').value=p.wage??'';document.getElementById('bartenderEmail').value=p.email||'';liveCalculate()}
-    function emailBartenderCopy(){const email=document.getElementById('bartenderEmail').value.trim();if(!email){alert('No bartender email entered.');return;}const s=getSession()||{};const subject=encodeURIComponent(`Settlement Receipt – ${s.event||'Shift'}`);const body=encodeURIComponent(document.getElementById('receiptPreview').textContent);location.href=`mailto:${email}?subject=${subject}&body=${body}`}
-    function emailOfficeReport(){const s=getSession();if(!s||!s.officeEmail){alert('Office email is missing in session setup.');return;}const all=getHistory().filter(x=>x.sessionDate===s.date&&x.venue===s.venue&&x.event===s.event);
-      const lines=['Night Report','','Venue: '+(s.venue||'—'),'Event: '+(s.event||'—'),'Date: '+(s.date||'—'),'',
-        ...all.map(x=>`${x.bartenderName} | ${x.station} | Tips ${money(x.tips)} | Cut ${money(x.venueCutAmount)} | Wage ${money(x.wage)} | Final ${money(x.finalPay)} | Till Diff ${money(x.tillDifference)}`),
-        '','Totals',`Settlements: ${all.length}`,`Tips: ${money(all.reduce((a,b)=>a+Number(b.tips||0),0))}`,`Venue Cut: ${money(all.reduce((a,b)=>a+Number(b.venueCutAmount||0),0))}`,`Paid Out: ${money(all.reduce((a,b)=>a+Number(b.finalPay||0),0))}`,`Till Difference: ${money(all.reduce((a,b)=>a+Number(b.tillDifference||0),0))}`].join('\n');
-      const subject=encodeURIComponent(`Office Night Report – ${s.event||'Shift'}`);const body=encodeURIComponent(lines);let url=`mailto:${encodeURIComponent(s.officeEmail)}?subject=${subject}&body=${body}`;if(s.ccEmail) url+=`&cc=${encodeURIComponent(s.ccEmail)}`;location.href=url}
-    function exportCurrentNight(){const s=getSession();if(!s){alert('No active session.');return;}downloadJson({session:s,settlements:getHistory().filter(x=>x.sessionDate===s.date&&x.venue===s.venue&&x.event===s.event)},`current-night-${s.date}.json`)}
-    function exportHistory(){downloadJson({session:getSession(),presets:getPresets(),settlements:getHistory()},'bartender-settlement-history.json')}
-    function importJson(event){const file=event.target.files&&event.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result);if(Array.isArray(data.presets))setPresets(data.presets);if(Array.isArray(data.settlements))setHistory(data.settlements);if(data.session){setSession(data.session);hydrateSessionInputs(data.session)}alert('JSON imported.')}catch(e){alert('Import failed. Invalid JSON.')}};reader.readAsText(file);event.target.value=''}
-    function downloadJson(obj,filename){const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;a.click();URL.revokeObjectURL(url)}
-    function clearEntry(){editingId=null;['bartenderName','bartenderEmail','station','wage','tips','tillReturned','manualAdjustment','entryNote'].forEach(id=>{document.getElementById(id).value=''});document.getElementById('paymentMethod').value='cash';const s=getSession();document.getElementById('venueCut').value=s?s.defaultCut:'';document.getElementById('tillStart').value=s?s.defaultFloat:'';setTipMode('separate');liveCalculate()}
-    function resetFormOnly(){hydrateSessionInputs({date:todayLocal(),venue:'',event:'',defaultCut:'',defaultFloat:'',officeEmail:'',ccEmail:'',notes:''});clearEntry();renderSessionStrip()}
-    function copyReceipt(){navigator.clipboard.writeText(document.getElementById('receiptPreview').textContent).then(()=>alert('Receipt copied.'))}
-    function printReceipt(){const receipt=document.getElementById('receiptPreview').textContent.replace(/</g,'&lt;');const w=window.open('','_blank');w.document.write(`<pre style="white-space:pre-wrap;font-family:Arial;padding:24px">${receipt}</pre>`);w.document.close();w.print()}
-    function populateDemo(){if(!getSession()){document.getElementById('sessionDate').value=todayLocal();document.getElementById('sessionVenue').value='Harbour Event Centre';document.getElementById('sessionEvent').value='Friday Latin Night';document.getElementById('sessionCut').value='5';document.getElementById('sessionFloat').value='100';document.getElementById('officeEmail').value='office@example.com';document.getElementById('ccEmail').value='manager@example.com';document.getElementById('sessionNotes').value='Demo session';startNight()}
-      document.getElementById('bartenderName').value='Sara';document.getElementById('station').value='VIP';document.getElementById('wage').value='180';document.getElementById('bartenderEmail').value='sara@example.com';document.getElementById('tips').value='400';document.getElementById('venueCut').value='5';document.getElementById('tillStart').value='100';document.getElementById('tillReturned').value='352';document.getElementById('manualAdjustment').value='0';document.getElementById('entryNote').value='Demo settlement';liveCalculate()}
-    function fillField(id,val){document.getElementById(id).value=val;liveCalculate()}
-    function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-    ['wage','tips','venueCut','tillStart','tillReturned','manualAdjustment','bartenderName','station','paymentMethod','entryNote'].forEach(id=>document.addEventListener('input',e=>{if(e.target.id===id)liveCalculate()}));
-    (function init(){document.getElementById('sessionDate').value=todayLocal();const s=getSession();if(s)hydrateSessionInputs(s);renderSessionStrip();renderPresetOptions();applySessionDefaultsToEntry();renderHistory();renderSummary();liveCalculate()})();
+      /* ─────────────────────────────────────────────────
+         UTILITIES
+      ───────────────────────────────────────────────── */
+
+      /** @param {number|null|undefined} n */
+      const fmt = (n) => `$${Number(n ?? 0).toFixed(2)}`;
+
+      /** Returns today's date as YYYY-MM-DD in local timezone. */
+      const todayLocal = () => {
+        const d = new Date();
+        return new Date(d.getTime() - d.getTimezoneOffset() * 60_000)
+          .toISOString()
+          .slice(0, 10);
+      };
+
+      /** Escapes HTML special characters to prevent XSS in innerHTML. */
+      const escapeHtml = (str) =>
+        String(str).replace(/[&<>"']/g, (c) => (
+          { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+        ));
+
+      /** Generates a collision-resistant unique ID. */
+      const newId = () =>
+        (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+      /** Triggers a browser download of a JSON object. */
+      const downloadJson = (obj, filename) => {
+        const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
+        const url  = URL.createObjectURL(blob);
+        const a    = Object.assign(document.createElement('a'), { href: url, download: filename });
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      };
+
+      /* ─────────────────────────────────────────────────
+         STORAGE
+         Thin wrapper around localStorage with JSON serialisation.
+      ───────────────────────────────────────────────── */
+
+      const Storage = {
+        /**
+         * @template T
+         * @param {string} key
+         * @param {T} fallback
+         * @returns {T}
+         */
+        get(key, fallback = null) {
+          try {
+            const raw = localStorage.getItem(key);
+            return raw !== null ? JSON.parse(raw) : fallback;
+          } catch {
+            return fallback;
+          }
+        },
+
+        /** @param {string} key @param {*} value */
+        set(key, value) {
+          try {
+            localStorage.setItem(key, JSON.stringify(value));
+          } catch (err) {
+            console.error('[Storage] Write failed:', err);
+          }
+        },
+
+        getSession:  ()      => Storage.get(STORAGE_KEYS.session),
+        setSession:  (s)     => { Storage.set(STORAGE_KEYS.session, s); UI.renderSessionStrip(); },
+        getHistory:  ()      => Storage.get(STORAGE_KEYS.history, []),
+        setHistory:  (items) => { Storage.set(STORAGE_KEYS.history, items); UI.renderHistory(); UI.renderSummary(); },
+        getPresets:  ()      => Storage.get(STORAGE_KEYS.presets, []),
+        setPresets:  (items) => { Storage.set(STORAGE_KEYS.presets, items); UI.renderPresetOptions(); },
+      };
+
+      /* ─────────────────────────────────────────────────
+         CALCULATOR
+         Pure function — given inputs, returns derived values.
+         No DOM reads or writes.
+      ───────────────────────────────────────────────── */
+
+      const Calculator = {
+        /**
+         * @param {{ wage: number, tips: number, cutPct: number, tillStart: number, tillReturned: number, adjustment: number }} inputs
+         * @param {'separate'|'included'} tipMode
+         * @returns {object}
+         */
+        calculate({ wage, tips, cutPct, tillStart, tillReturned, adjustment }, tipMode) {
+          const venueCutAmount = tips * (cutPct / 100);
+          const tipPayout      = tips - venueCutAmount;
+          const tillDifference = tillReturned - tillStart;
+          const estimatedSales = tipMode === TIP_MODE.INCLUDED
+            ? tillDifference - tips
+            : tillDifference;
+          const finalPay       = wage + tipPayout + adjustment;
+
+          return {
+            wage,
+            tips,
+            cut: cutPct,           // stored as `cut` for backward-compat with history records
+            tillStart,
+            tillReturned,
+            adj: adjustment,       // stored as `adj`
+            venueCutAmount,
+            tipPayout,
+            tillDifference,
+            estimatedSales,
+            finalPay,
+            tipMode,
+          };
+        },
+      };
+
+      /* ─────────────────────────────────────────────────
+         RECEIPT
+         Builds a formatted plain-text receipt string.
+      ───────────────────────────────────────────────── */
+
+      const Receipt = {
+        /**
+         * @param {object} calc - result of Calculator.calculate()
+         * @returns {string}
+         */
+        build(calc) {
+          const session       = Storage.getSession() ?? {};
+          const name          = DOM.val('bartenderName') || '—';
+          const station       = DOM.val('station')       || '—';
+          const payMethod     = DOM.val('paymentMethod');
+          const note          = DOM.val('entryNote');
+          const workflowLabel = calc.tipMode === TIP_MODE.SEPARATE
+            ? 'Tips entered separately'
+            : 'Tips included in till';
+
+          /** Right-aligns value within a fixed-width label column. */
+          const row = (label, value, width = 26) =>
+            `${label.padEnd(width)}${value}`;
+
+          return [
+            '══════════════════════════════════════════',
+            '           BARTENDER SETTLEMENT',
+            '══════════════════════════════════════════',
+            '',
+            row('Venue:',  session.venue || '—'),
+            row('Event:',  session.event || '—'),
+            row('Date:',   session.date  || '—'),
+            '',
+            row('Bartender:',      name),
+            row('Station:',        station),
+            row('Payment Method:', payMethod),
+            row('Tip Workflow:',   workflowLabel),
+            '',
+            '── Tips ───────────────────────────────────',
+            row('Tips Received:',    fmt(calc.tips)),
+            row('Venue Cut %:',      `${Number(calc.cut).toFixed(2)}%`),
+            row('Venue Cut Amount:', fmt(calc.venueCutAmount)),
+            row('Tip Payout:',       fmt(calc.tipPayout)),
+            '',
+            '── Pay ────────────────────────────────────',
+            row('Wage:',              fmt(calc.wage)),
+            row('Manual Adjustment:', fmt(calc.adj)),
+            row('FINAL PAY:',         fmt(calc.finalPay)),
+            '',
+            '── Till ───────────────────────────────────',
+            row('Till Float:',     fmt(calc.tillStart)),
+            row('Till Returned:',  fmt(calc.tillReturned)),
+            row('Till Difference:', fmt(calc.tillDifference)),
+            row('Est. Cash Sales:', fmt(calc.estimatedSales)),
+            '',
+            '───────────────────────────────────────────',
+            row('Session Note:', session.notes || '—'),
+            row('Entry Note:',   note          || '—'),
+          ].join('\n');
+        },
+      };
+
+      /* ─────────────────────────────────────────────────
+         DOM
+         Thin helpers for reading and writing form values.
+      ───────────────────────────────────────────────── */
+
+      /** @param {string} id @returns {HTMLElement|null} */
+      const $ = (id) => document.getElementById(id);
+
+      const DOM = {
+        /** Reads and trims the value of an input/select by ID. */
+        val:    (id) => $(id)?.value?.trim() ?? '',
+
+        /** Reads the numeric value of an input by ID (defaults to 0). */
+        numVal: (id) => Number($(id)?.value || 0),
+
+        /** Sets the value of an element by ID. Accepts null/undefined. */
+        setVal: (id, v) => { const el = $(id); if (el) el.value = (v ?? ''); },
+
+        /**
+         * Reads all numeric entry fields into a plain object.
+         * @returns {{ wage: number, tips: number, cutPct: number, tillStart: number, tillReturned: number, adjustment: number }}
+         */
+        readEntryInputs() {
+          return {
+            wage:         DOM.numVal('wage'),
+            tips:         DOM.numVal('tips'),
+            cutPct:       DOM.numVal('venueCut'),
+            tillStart:    DOM.numVal('tillStart'),
+            tillReturned: DOM.numVal('tillReturned'),
+            adjustment:   DOM.numVal('manualAdjustment'),
+          };
+        },
+
+        /** Resets all bartender entry fields to empty / session defaults. */
+        clearEntryFields() {
+          ['bartenderName', 'bartenderEmail', 'station', 'wage', 'tips',
+           'tillReturned', 'manualAdjustment', 'entryNote'].forEach((id) => DOM.setVal(id, ''));
+          DOM.setVal('paymentMethod', 'cash');
+          const session = Storage.getSession();
+          DOM.setVal('venueCut',  session?.defaultCut   ?? '');
+          DOM.setVal('tillStart', session?.defaultFloat ?? '');
+        },
+      };
+
+      /* ─────────────────────────────────────────────────
+         SESSION
+      ───────────────────────────────────────────────── */
+
+      const Session = {
+        /** Reads the session form fields into a plain object. */
+        readInputs() {
+          return {
+            date:         DOM.val('sessionDate') || todayLocal(),
+            venue:        DOM.val('sessionVenue'),
+            event:        DOM.val('sessionEvent'),
+            defaultCut:   DOM.numVal('sessionCut'),
+            defaultFloat: DOM.numVal('sessionFloat'),
+            officeEmail:  DOM.val('officeEmail'),
+            ccEmail:      DOM.val('ccEmail'),
+            notes:        DOM.val('sessionNotes'),
+            closedAt:     null,
+          };
+        },
+
+        /** Populates the session form fields from a session object. */
+        hydrate(s) {
+          DOM.setVal('sessionDate',  s.date         ?? todayLocal());
+          DOM.setVal('sessionVenue', s.venue        ?? '');
+          DOM.setVal('sessionEvent', s.event        ?? '');
+          DOM.setVal('sessionCut',   s.defaultCut   ?? '');
+          DOM.setVal('sessionFloat', s.defaultFloat ?? '');
+          DOM.setVal('officeEmail',  s.officeEmail  ?? '');
+          DOM.setVal('ccEmail',      s.ccEmail      ?? '');
+          DOM.setVal('sessionNotes', s.notes        ?? '');
+        },
+
+        /** Applies session defaults to empty entry fields. */
+        applyDefaultsToEntry() {
+          const s = Storage.getSession();
+          if (!s) return;
+          if (!$('venueCut').value)  DOM.setVal('venueCut',  s.defaultCut   ?? '');
+          if (!$('tillStart').value) DOM.setVal('tillStart', s.defaultFloat ?? '');
+        },
+
+        start() {
+          Storage.setSession(Session.readInputs());
+          Session.applyDefaultsToEntry();
+          alert('Night session saved.');
+        },
+
+        close() {
+          const s = Storage.getSession();
+          if (!s) { alert('No active session.'); return; }
+          Storage.setSession({ ...s, closedAt: new Date().toISOString() });
+          alert('Night marked as closed. Records remain saved.');
+        },
+
+        loadLast() {
+          const s = Storage.getSession();
+          if (!s) { alert('No saved session found.'); return; }
+          Session.hydrate(s);
+          Session.applyDefaultsToEntry();
+          alert('Last session loaded.');
+        },
+
+        resetForm() {
+          Session.hydrate({
+            date: todayLocal(), venue: '', event: '',
+            defaultCut: '', defaultFloat: '',
+            officeEmail: '', ccEmail: '', notes: '',
+          });
+          DOM.clearEntryFields();
+          UI.renderSessionStrip();
+        },
+      };
+
+      /* ─────────────────────────────────────────────────
+         SETTLEMENTS
+      ───────────────────────────────────────────────── */
+
+      const Settlements = {
+        save() {
+          const session = Storage.getSession();
+          if (!session) { alert('Start the night session first.'); return; }
+          const name = DOM.val('bartenderName');
+          if (!name) { alert('Enter bartender name.'); return; }
+
+          const calc = APP.liveCalculate();
+          const item = {
+            id:                 state.editingId ?? newId(),
+            sessionDate:        session.date,
+            venue:              session.venue,
+            event:              session.event,
+            bartenderName:      name,
+            bartenderEmail:     DOM.val('bartenderEmail'),
+            station:            DOM.val('station'),
+            paymentMethod:      DOM.val('paymentMethod'),
+            note:               DOM.val('entryNote'),
+            sessionOfficeEmail: session.officeEmail ?? '',
+            sessionCcEmail:     session.ccEmail     ?? '',
+            sessionNotes:       session.notes       ?? '',
+            ...calc,
+            receipt:            Receipt.build(calc),
+            savedAt:            new Date().toISOString(),
+          };
+
+          const history = Storage.getHistory();
+          const idx     = history.findIndex((x) => x.id === item.id);
+          if (idx >= 0) history[idx] = item; else history.unshift(item);
+          Storage.setHistory(history);
+
+          state.editingId = null;
+          alert('Settlement saved.');
+        },
+
+        edit(id) {
+          const item = Storage.getHistory().find((x) => x.id === id);
+          if (!item) return;
+          Settlements._populateForm(item);
+          state.editingId = item.id;
+          alert('Loaded into form for editing.');
+        },
+
+        duplicate(id) {
+          const item = Storage.getHistory().find((x) => x.id === id);
+          if (!item) return;
+          Settlements._populateForm(item);
+          state.editingId = null; // duplicate creates a new record on save
+        },
+
+        duplicateLast() {
+          const history = Storage.getHistory();
+          if (!history.length) { alert('No saved item to duplicate.'); return; }
+          Settlements.duplicate(history[0].id);
+        },
+
+        delete(id) {
+          if (!confirm('Delete this settlement?')) return;
+          Storage.setHistory(Storage.getHistory().filter((x) => x.id !== id));
+        },
+
+        /** @private Populates all entry fields from a stored settlement item. */
+        _populateForm(item) {
+          DOM.setVal('bartenderName',    item.bartenderName   ?? '');
+          DOM.setVal('bartenderEmail',   item.bartenderEmail  ?? '');
+          DOM.setVal('station',          item.station         ?? '');
+          DOM.setVal('paymentMethod',    item.paymentMethod   ?? 'cash');
+          DOM.setVal('wage',             item.wage            ?? '');
+          DOM.setVal('tips',             item.tips            ?? '');
+          DOM.setVal('venueCut',         item.cut             ?? '');
+          DOM.setVal('tillStart',        item.tillStart       ?? '');
+          DOM.setVal('tillReturned',     item.tillReturned    ?? '');
+          DOM.setVal('manualAdjustment', item.adj             ?? '');
+          DOM.setVal('entryNote',        item.note            ?? '');
+          APP.setTipMode(item.tipMode ?? TIP_MODE.SEPARATE);
+          APP.liveCalculate();
+        },
+      };
+
+      /* ─────────────────────────────────────────────────
+         PRESETS
+      ───────────────────────────────────────────────── */
+
+      const Presets = {
+        save() {
+          const name = DOM.val('bartenderName');
+          if (!name) { alert('Enter bartender name first.'); return; }
+          const preset = {
+            name,
+            station: DOM.val('station'),
+            wage:    DOM.numVal('wage'),
+            email:   DOM.val('bartenderEmail'),
+          };
+          const presets = Storage.getPresets();
+          const idx     = presets.findIndex((p) => p.name.toLowerCase() === name.toLowerCase());
+          if (idx >= 0) presets[idx] = preset; else presets.push(preset);
+          Storage.setPresets(presets);
+          alert('Preset saved.');
+        },
+
+        apply() {
+          const name   = DOM.val('presetSelect');
+          const preset = Storage.getPresets().find((x) => x.name === name);
+          if (!preset) return;
+          DOM.setVal('bartenderName',  preset.name    ?? '');
+          DOM.setVal('station',        preset.station ?? '');
+          DOM.setVal('wage',           preset.wage    ?? '');
+          DOM.setVal('bartenderEmail', preset.email   ?? '');
+          APP.liveCalculate();
+        },
+      };
+
+      /* ─────────────────────────────────────────────────
+         EMAIL
+         Generates mailto: URIs and navigates to them.
+      ───────────────────────────────────────────────── */
+
+      const Email = {
+        bartenderCopy() {
+          const email = DOM.val('bartenderEmail');
+          if (!email) { alert('No bartender email entered.'); return; }
+          const session = Storage.getSession() ?? {};
+          const subject = encodeURIComponent(`Settlement Receipt – ${session.event ?? 'Shift'}`);
+          const body    = encodeURIComponent($('js-receipt-preview').textContent);
+          location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+        },
+
+        officeReport() {
+          const session = Storage.getSession();
+          if (!session?.officeEmail) { alert('Office email is missing in session setup.'); return; }
+
+          const sessionItems = Storage.getHistory().filter(
+            (x) => x.sessionDate === session.date
+                && x.venue       === session.venue
+                && x.event       === session.event,
+          );
+
+          const total = (key) => sessionItems.reduce((acc, b) => acc + Number(b[key] ?? 0), 0);
+
+          const lines = [
+            'NIGHT REPORT',
+            '',
+            `Venue: ${session.venue || '—'}`,
+            `Event: ${session.event || '—'}`,
+            `Date:  ${session.date  || '—'}`,
+            '',
+            ...sessionItems.map((x) =>
+              `${x.bartenderName} | ${x.station} | Tips ${fmt(x.tips)} | Cut ${fmt(x.venueCutAmount)} | Wage ${fmt(x.wage)} | Final ${fmt(x.finalPay)} | Till Diff ${fmt(x.tillDifference)}`
+            ),
+            '',
+            'TOTALS',
+            `Settlements:   ${sessionItems.length}`,
+            `Tips:          ${fmt(total('tips'))}`,
+            `Venue Cut:     ${fmt(total('venueCutAmount'))}`,
+            `Paid Out:      ${fmt(total('finalPay'))}`,
+            `Till Diff:     ${fmt(total('tillDifference'))}`,
+          ];
+
+          const subject = encodeURIComponent(`Office Night Report – ${session.event ?? 'Shift'}`);
+          const body    = encodeURIComponent(lines.join('\n'));
+          let url       = `mailto:${encodeURIComponent(session.officeEmail)}?subject=${subject}&body=${body}`;
+          if (session.ccEmail) url += `&cc=${encodeURIComponent(session.ccEmail)}`;
+          location.href = url;
+        },
+      };
+
+      /* ─────────────────────────────────────────────────
+         DATA I/O
+         JSON import and export.
+      ───────────────────────────────────────────────── */
+
+      const DataIO = {
+        exportCurrentNight() {
+          const s = Storage.getSession();
+          if (!s) { alert('No active session.'); return; }
+          const settlements = Storage.getHistory().filter(
+            (x) => x.sessionDate === s.date && x.venue === s.venue && x.event === s.event,
+          );
+          downloadJson({ session: s, settlements }, `settlement-${s.date}.json`);
+        },
+
+        exportHistory() {
+          downloadJson({
+            session:     Storage.getSession(),
+            presets:     Storage.getPresets(),
+            settlements: Storage.getHistory(),
+          }, 'bartender-settlement-history.json');
+        },
+
+        /** @param {Event} event - file input change event */
+        importJson(event) {
+          const file = event.target.files?.[0];
+          if (!file) return;
+
+          const reader = new FileReader();
+          reader.onload = () => {
+            try {
+              const data = JSON.parse(reader.result);
+              if (Array.isArray(data.presets))     Storage.setPresets(data.presets);
+              if (Array.isArray(data.settlements)) Storage.setHistory(data.settlements);
+              if (data.session) {
+                Storage.setSession(data.session);
+                Session.hydrate(data.session);
+              }
+              alert('JSON imported successfully.');
+            } catch {
+              alert('Import failed: invalid or malformed JSON file.');
+            }
+          };
+          reader.readAsText(file);
+          event.target.value = ''; // allow reimporting the same file
+        },
+      };
+
+      /* ─────────────────────────────────────────────────
+         UI
+         All DOM rendering functions. Never calls Storage.set()
+         or triggers side-effects beyond their own DOM writes.
+      ───────────────────────────────────────────────── */
+
+      const UI = {
+        renderSessionStrip() {
+          const s  = Storage.getSession();
+          const el = $('js-session-strip');
+          if (!s) {
+            el.textContent = 'No active night yet. Start a session below.';
+            return;
+          }
+          const statusLabel = s.closedAt ? '🔒 Closed' : '🟢 Active';
+          el.innerHTML = [
+            `<strong>${escapeHtml(s.event || 'Untitled Event')}</strong>`,
+            `<span>Venue: ${escapeHtml(s.venue || '—')}</span>`,
+            `<span>Date: ${escapeHtml(s.date || '—')}</span>`,
+            `<span>Float: ${fmt(s.defaultFloat)}</span>`,
+            `<span>Cut: ${Number(s.defaultCut ?? 0).toFixed(2)}%</span>`,
+            `<span>${statusLabel}</span>`,
+          ].join('');
+        },
+
+        renderSummary() {
+          const s     = Storage.getSession();
+          const all   = Storage.getHistory();
+          const items = s
+            ? all.filter((x) => x.sessionDate === s.date && x.venue === s.venue && x.event === s.event)
+            : [];
+
+          const total = (key) => items.reduce((acc, b) => acc + Number(b[key] ?? 0), 0);
+
+          const metrics = [
+            ['Settlements',     items.length],
+            ['Total Tips',      fmt(total('tips'))],
+            ['Venue Cut',       fmt(total('venueCutAmount'))],
+            ['Tip Payout',      fmt(total('tipPayout'))],
+            ['Total Wages',     fmt(total('wage'))],
+            ['Total Paid Out',  fmt(total('finalPay'))],
+            ['Total Float',     fmt(total('tillStart'))],
+            ['Till Returned',   fmt(total('tillReturned'))],
+            ['Till Difference', fmt(total('tillDifference'))],
+          ];
+
+          $('js-summary-grid').innerHTML = metrics
+            .map(([label, value]) => `
+              <div class="metric">
+                <div class="metric__label">${escapeHtml(label)}</div>
+                <div class="metric__value" style="font-size:20px">${escapeHtml(String(value))}</div>
+              </div>`)
+            .join('');
+        },
+
+        renderHistory() {
+          const body  = $('js-history-body');
+          const items = Storage.getHistory();
+
+          if (!items.length) {
+            body.innerHTML = `
+              <tr>
+                <td colspan="7" style="color:var(--text-muted);text-align:center;padding:28px 12px">
+                  No settlements saved yet.
+                </td>
+              </tr>`;
+            return;
+          }
+
+          body.innerHTML = items.map((item) => {
+            const diffClass = item.tillDifference > 0 ? 'positive'
+              : item.tillDifference < 0 ? 'negative' : '';
+            return `
+              <tr>
+                <td>${escapeHtml(item.sessionDate)}<div class="text-secondary">${escapeHtml(item.event || '')}</div></td>
+                <td>${escapeHtml(item.bartenderName)}<div class="text-secondary">${escapeHtml(item.paymentMethod || '')}</div></td>
+                <td>${escapeHtml(item.station || '—')}</td>
+                <td>${escapeHtml(fmt(item.finalPay))}</td>
+                <td class="${diffClass}">${escapeHtml(fmt(item.tillDifference))}</td>
+                <td><span class="badge">${escapeHtml(item.tipMode || '')}</span></td>
+                <td style="white-space:nowrap;display:flex;gap:6px;flex-wrap:wrap">
+                  <button class="chip js-row-action" data-action="edit"      data-id="${escapeHtml(item.id)}">Edit</button>
+                  <button class="chip js-row-action" data-action="duplicate" data-id="${escapeHtml(item.id)}">Dup.</button>
+                  <button class="chip js-row-action" data-action="delete"    data-id="${escapeHtml(item.id)}">Delete</button>
+                </td>
+              </tr>`;
+          }).join('');
+        },
+
+        renderPresetOptions() {
+          const select  = $('presetSelect');
+          const current = select.value;
+          select.innerHTML = '<option value="">Choose preset…</option>'
+            + Storage.getPresets()
+                .map((p) => `<option value="${escapeHtml(p.name)}">${escapeHtml(p.name)}</option>`)
+                .join('');
+          select.value = current;
+        },
+
+        /** Updates all calculator display metrics from a calc result object. */
+        updateCalculatorDisplay(calc) {
+          $('js-big-pay').textContent          = fmt(calc.finalPay);
+          $('js-venue-cut-amount').textContent = fmt(calc.venueCutAmount);
+          $('js-tip-payout').textContent       = fmt(calc.tipPayout);
+          $('js-wage-out').textContent         = fmt(calc.wage);
+          $('js-adj-out').textContent          = fmt(calc.adj);
+
+          const diffEl  = $('js-till-difference');
+          diffEl.textContent = fmt(calc.tillDifference);
+          diffEl.className   = `metric__value ${calc.tillDifference > 0 ? 'positive' : calc.tillDifference < 0 ? 'negative' : ''}`;
+
+          const salesEl = $('js-estimated-sales');
+          salesEl.textContent = fmt(calc.estimatedSales);
+          salesEl.className   = `metric__value ${calc.estimatedSales > 0 ? 'positive' : calc.estimatedSales < 0 ? 'warning' : ''}`;
+        },
+
+        /** Regenerates the receipt preview from the latest calc result. */
+        updateReceiptPreview(calc) {
+          const result = calc ?? state.lastCalc ?? Calculator.calculate(DOM.readEntryInputs(), state.tipMode);
+          $('js-receipt-preview').textContent = Receipt.build(result);
+        },
+      };
+
+      /* ─────────────────────────────────────────────────
+         APP
+         Top-level orchestration and actions that span
+         multiple modules (calculate, tipMode, demo, clipboard).
+      ───────────────────────────────────────────────── */
+
+      const APP = {
+        /** @param {'separate'|'included'} mode */
+        setTipMode(mode) {
+          state.tipMode = mode;
+          $('js-mode-separate').classList.toggle('active', mode === TIP_MODE.SEPARATE);
+          $('js-mode-included').classList.toggle('active', mode === TIP_MODE.INCLUDED);
+          APP.liveCalculate();
+        },
+
+        /** Reads form inputs, runs the calculator, updates all displays, and returns the result. */
+        liveCalculate() {
+          const calc     = Calculator.calculate(DOM.readEntryInputs(), state.tipMode);
+          state.lastCalc = calc;
+          UI.updateCalculatorDisplay(calc);
+          UI.updateReceiptPreview(calc);
+          return calc;
+        },
+
+        clearEntry() {
+          state.editingId = null;
+          DOM.clearEntryFields();
+          APP.setTipMode(TIP_MODE.SEPARATE);
+          APP.liveCalculate();
+        },
+
+        /** Populates the form with demo data so new users can explore the app. */
+        populateDemo() {
+          if (!Storage.getSession()) {
+            DOM.setVal('sessionDate',  todayLocal());
+            DOM.setVal('sessionVenue', 'Harbour Event Centre');
+            DOM.setVal('sessionEvent', 'Friday Latin Night');
+            DOM.setVal('sessionCut',   '5');
+            DOM.setVal('sessionFloat', '100');
+            DOM.setVal('officeEmail',  'office@example.com');
+            DOM.setVal('ccEmail',      'manager@example.com');
+            DOM.setVal('sessionNotes', 'Demo session');
+            Session.start();
+          }
+          DOM.setVal('bartenderName',    'Sara');
+          DOM.setVal('station',          'VIP');
+          DOM.setVal('wage',             '180');
+          DOM.setVal('bartenderEmail',   'sara@example.com');
+          DOM.setVal('tips',             '400');
+          DOM.setVal('venueCut',         '5');
+          DOM.setVal('tillStart',        '100');
+          DOM.setVal('tillReturned',     '352');
+          DOM.setVal('manualAdjustment', '0');
+          DOM.setVal('entryNote',        'Demo settlement');
+          APP.liveCalculate();
+        },
+
+        copyReceipt() {
+          navigator.clipboard.writeText($('js-receipt-preview').textContent)
+            .then(()  => alert('Receipt copied to clipboard.'))
+            .catch(()  => alert('Copy failed — please select and copy the text manually.'));
+        },
+
+        printReceipt() {
+          const escaped = $('js-receipt-preview').textContent.replace(/</g, '&lt;');
+          const win     = window.open('', '_blank');
+          if (!win) { alert('Pop-up blocked — please allow pop-ups and try again.'); return; }
+          win.document.write(`<pre style="white-space:pre-wrap;font-family:monospace;font-size:13px;padding:24px">${escaped}</pre>`);
+          win.document.close();
+          win.print();
+        },
+      };
+
+      /* ─────────────────────────────────────────────────
+         EVENT BINDING
+         All event listeners registered here; no inline
+         handlers in HTML.
+      ───────────────────────────────────────────────── */
+
+      function bindEvents() {
+        // ── Session ──────────────────────────────────────
+        $('js-btn-start-night').addEventListener('click', Session.start);
+        $('js-btn-close-night').addEventListener('click', Session.close);
+        $('js-btn-load-last'  ).addEventListener('click', Session.loadLast);
+        $('js-btn-reset-form' ).addEventListener('click', Session.resetForm);
+
+        // ── Entry ────────────────────────────────────────
+        $('js-btn-save-settlement').addEventListener('click', Settlements.save);
+        $('js-btn-duplicate-last' ).addEventListener('click', Settlements.duplicateLast);
+        $('js-btn-demo'           ).addEventListener('click', APP.populateDemo);
+        $('js-btn-clear-entry'    ).addEventListener('click', APP.clearEntry);
+
+        // ── Summary / IO ─────────────────────────────────
+        $('js-btn-email-office'  ).addEventListener('click',  Email.officeReport);
+        $('js-btn-export-night'  ).addEventListener('click',  DataIO.exportCurrentNight);
+        $('js-btn-export-history').addEventListener('click',  DataIO.exportHistory);
+        $('js-import-input'      ).addEventListener('change', DataIO.importJson);
+
+        // ── Receipt ──────────────────────────────────────
+        $('js-btn-email-bartender').addEventListener('click', Email.bartenderCopy);
+        $('js-btn-copy-receipt'   ).addEventListener('click', APP.copyReceipt);
+        $('js-btn-print-receipt'  ).addEventListener('click', APP.printReceipt);
+        $('js-btn-save-preset'    ).addEventListener('click', Presets.save);
+
+        // ── Tip mode toggle ──────────────────────────────
+        $('js-mode-separate').addEventListener('click', () => APP.setTipMode(TIP_MODE.SEPARATE));
+        $('js-mode-included').addEventListener('click', () => APP.setTipMode(TIP_MODE.INCLUDED));
+
+        // ── Preset select ────────────────────────────────
+        $('presetSelect').addEventListener('change', Presets.apply);
+
+        // ── Wage chips (delegated to parent) ────────────
+        $('js-wage-chips').addEventListener('click', (e) => {
+          const btn = e.target.closest('[data-wage]');
+          if (!btn) return;
+          DOM.setVal('wage', btn.dataset.wage);
+          APP.liveCalculate();
+        });
+
+        // ── History table row actions (delegated to tbody) ─
+        $('js-history-body').addEventListener('click', (e) => {
+          const btn = e.target.closest('.js-row-action');
+          if (!btn) return;
+          const { action, id } = btn.dataset;
+          if (action === 'edit')      Settlements.edit(id);
+          if (action === 'duplicate') Settlements.duplicate(id);
+          if (action === 'delete')    Settlements.delete(id);
+        });
+
+        // ── Live recalculation ───────────────────────────
+        const liveFields = [
+          'wage', 'tips', 'venueCut', 'tillStart', 'tillReturned',
+          'manualAdjustment', 'bartenderName', 'station', 'paymentMethod', 'entryNote',
+        ];
+        liveFields.forEach((id) => {
+          const el = $(id);
+          if (!el) return;
+          el.addEventListener('input',  APP.liveCalculate);
+          el.addEventListener('change', APP.liveCalculate);
+        });
+      }
+
+      /* ─────────────────────────────────────────────────
+         INIT
+      ───────────────────────────────────────────────── */
+
+      function init() {
+        DOM.setVal('sessionDate', todayLocal());
+
+        const session = Storage.getSession();
+        if (session) Session.hydrate(session);
+
+        UI.renderSessionStrip();
+        UI.renderPresetOptions();
+        Session.applyDefaultsToEntry();
+        UI.renderHistory();
+        UI.renderSummary();
+        APP.liveCalculate();
+
+        bindEvents();
+      }
+
+      init();
+    })();
   </script>
 </body>
 </html>
