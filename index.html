@@ -81,7 +81,15 @@
       margin-top: 12px;
     }
 
-    @media (max-width: 650px) { .row-2 { grid-template-columns: 1fr; } }
+    .row-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 760px) { .row-3 { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 650px) { .row-2, .row-3 { grid-template-columns: 1fr; } }
 
     /* ─── HERO ──────────────────────────────────────── */
     .hero {
@@ -512,11 +520,31 @@
             <p class="hint">Use <em>separate</em> when the bartender tells you tips directly. Use <em>included</em> when the till amount already contains tips and cash together.</p>
           </div>
 
-          <div class="row-2">
+          <div class="row-3">
             <div>
-              <label for="presetSelect">Bartender Preset</label>
+              <label for="presetSelect">Staff Preset</label>
               <select id="presetSelect" class="is-default">
                 <option value="">Choose preset…</option>
+              </select>
+            </div>
+            <div>
+              <label for="staffRole">Staff Role</label>
+              <select id="staffRole">
+                <optgroup label="Bar">
+                  <option value="bartender">🍸 Bartender</option>
+                  <option value="barback">🧊 Bar Technician</option>
+                </optgroup>
+                <optgroup label="Kitchen">
+                  <option value="kitchen">🍳 Culinary Operative</option>
+                </optgroup>
+                <optgroup label="Venue">
+                  <option value="door">🛡️ Door Supervisor</option>
+                  <option value="steward">✨ Venue Steward</option>
+                </optgroup>
+                <optgroup label="Production">
+                  <option value="photographer">📸 Photographer</option>
+                  <option value="production">🎛️ Production Engineer</option>
+                </optgroup>
               </select>
             </div>
             <div>
@@ -532,7 +560,7 @@
 
           <div class="row-2">
             <div>
-              <label for="bartenderName">Bartender Name</label>
+              <label for="bartenderName">Staff Name</label>
               <input id="bartenderName" type="text" placeholder="Ali / Sara / Mike">
             </div>
             <div>
@@ -676,7 +704,8 @@
               <thead>
                 <tr>
                   <th scope="col">Date</th>
-                  <th scope="col">Bartender</th>
+                  <th scope="col">Staff</th>
+                  <th scope="col">Role</th>
                   <th scope="col">Station</th>
                   <th scope="col">Final Pay</th>
                   <th scope="col">Till Diff</th>
@@ -877,6 +906,8 @@
           const station       = DOM.val('station')       || '—';
           const payMethod     = DOM.val('paymentMethod');
           const note          = DOM.val('entryNote');
+          const roleLabels    = { bartender: 'Bartender', barback: 'Bar Technician', steward: 'Venue Steward', kitchen: 'Culinary Operative', door: 'Door Supervisor', photographer: 'Photographer', production: 'Production Engineer' };
+          const roleLabel     = roleLabels[DOM.val('staffRole')] ?? DOM.val('staffRole') ?? '—';
           const workflowLabel = calc.tipMode === TIP_MODE.SEPARATE
             ? 'Tips entered separately'
             : 'Tips included in till';
@@ -895,6 +926,7 @@
             row('Date:',   session.date  || '—'),
             '',
             row('Bartender:',      name),
+            row('Role:',           roleLabel),
             row('Station:',        station),
             row('Payment Method:', payMethod),
             row('Tip Workflow:',   workflowLabel),
@@ -961,6 +993,7 @@
           ['bartenderName', 'bartenderEmail', 'station', 'wage', 'tips',
            'tillReturned', 'manualAdjustment', 'entryNote'].forEach((id) => DOM.setVal(id, ''));
           DOM.setVal('paymentMethod', 'cash');
+          DOM.setVal('staffRole', 'bartender');
           const session = Storage.getSession();
           DOM.setVal('venueCut',  session?.defaultCut   ?? '');
           DOM.setVal('tillStart', session?.defaultFloat ?? '');
@@ -1056,6 +1089,7 @@
             sessionDate:        session.date,
             venue:              session.venue,
             event:              session.event,
+            staffRole:          DOM.val('staffRole'),
             bartenderName:      name,
             bartenderEmail:     DOM.val('bartenderEmail'),
             station:            DOM.val('station'),
@@ -1106,6 +1140,7 @@
 
         /** @private Populates all entry fields from a stored settlement item. */
         _populateForm(item) {
+          DOM.setVal('staffRole',          item.staffRole       ?? 'bartender');
           DOM.setVal('bartenderName',    item.bartenderName   ?? '');
           DOM.setVal('bartenderEmail',   item.bartenderEmail  ?? '');
           DOM.setVal('station',          item.station         ?? '');
@@ -1319,20 +1354,22 @@
           if (!items.length) {
             body.innerHTML = `
               <tr>
-                <td colspan="7" style="color:var(--text-muted);text-align:center;padding:28px 12px">
+                <td colspan="8" style="color:var(--text-muted);text-align:center;padding:28px 12px">
                   No settlements saved yet.
                 </td>
               </tr>`;
             return;
           }
 
+          const roleLabels = { bartender: 'Bartender', barback: 'Bar Technician', steward: 'Venue Steward', kitchen: 'Culinary Operative', door: 'Door Supervisor', photographer: 'Photographer', production: 'Production Engineer' };
           body.innerHTML = items.map((item) => {
-            const diffClass = item.tillDifference > 0 ? 'positive'
-              : item.tillDifference < 0 ? 'negative' : '';
+            const diffClass  = item.tillDifference > 0 ? 'positive' : item.tillDifference < 0 ? 'negative' : '';
+            const roleLabel  = roleLabels[item.staffRole] ?? (item.staffRole || '—');
             return `
               <tr>
                 <td>${escapeHtml(item.sessionDate)}<div class="text-secondary">${escapeHtml(item.event || '')}</div></td>
                 <td>${escapeHtml(item.bartenderName)}<div class="text-secondary">${escapeHtml(item.paymentMethod || '')}</div></td>
+                <td><span class="badge">${escapeHtml(roleLabel)}</span></td>
                 <td>${escapeHtml(item.station || '—')}</td>
                 <td>${escapeHtml(fmt(item.finalPay))}</td>
                 <td class="${diffClass}">${escapeHtml(fmt(item.tillDifference))}</td>
@@ -1425,6 +1462,7 @@
             Session.start();
           }
           DOM.setVal('bartenderName',    'Sara');
+          DOM.setVal('staffRole',        'bartender');
           DOM.setVal('station',          'VIP');
           DOM.setVal('wage',             '180');
           DOM.setVal('bartenderEmail',   'sara@example.com');
@@ -1512,7 +1550,7 @@
         // ── Live recalculation ───────────────────────────
         const liveFields = [
           'wage', 'tips', 'venueCut', 'tillStart', 'tillReturned',
-          'manualAdjustment', 'bartenderName', 'station', 'paymentMethod', 'entryNote',
+          'manualAdjustment', 'bartenderName', 'station', 'staffRole', 'paymentMethod', 'entryNote',
         ];
         liveFields.forEach((id) => {
           const el = $(id);
