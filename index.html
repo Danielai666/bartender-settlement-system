@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Bartender Settlement</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body{
+      background:#0e0e0e;
+      color:white;
+      font-family:Arial,sans-serif;
+      padding:20px;
+    }
+    .card{
+      background:#1b1b1b;
+      padding:20px;
+      border-radius:12px;
+      margin-bottom:20px;
+    }
+    input{
+      width:100%;
+      padding:14px;
+      margin-top:8px;
+      margin-bottom:16px;
+      border:none;
+      border-radius:8px;
+      font-size:18px;
+      box-sizing:border-box;
+    }
+    button{
+      width:100%;
+      padding:16px;
+      background:#00c2ff;
+      border:none;
+      border-radius:10px;
+      font-size:18px;
+      color:white;
+      cursor:pointer;
+    }
+    .result{
+      font-size:22px;
+      font-weight:bold;
+      margin-top:10px;
+      line-height:1.6;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Bartender Settlement</h1>
+
+  <div class="card">
+    <h3>Session</h3>
+    <input id="venue" placeholder="Venue">
+    <input id="event" placeholder="Event">
+    <input id="cut" placeholder="Venue Cut %" type="number">
+    <input id="float" placeholder="Default Float" type="number">
+    <button onclick="startSession()">Start Night</button>
+  </div>
+
+  <div class="card">
+    <h3>Settlement</h3>
+    <input id="bartender" placeholder="Bartender Name">
+    <input id="station" placeholder="Station">
+    <input id="wage" type="number" placeholder="Wage">
+    <input id="tips" type="number" placeholder="Tips">
+    <input id="tillStart" type="number" placeholder="Till Start">
+    <input id="tillReturned" type="number" placeholder="Till Returned">
+    <button onclick="calculate()">Calculate</button>
+
+    <div id="results"></div>
+
+    <br>
+
+    <button onclick="saveSettlement()">Save Settlement</button>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
