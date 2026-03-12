@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Venue Settlement Pro</title>
+  <title>Bartender Settlement Pro</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
     /* ─── DESIGN TOKENS ─────────────────────────────── */
     :root {
@@ -439,7 +440,7 @@
     <!-- HERO -->
     <header class="hero">
       <div>
-        <h1 class="hero__title">Venue<br>Settlement</h1>
+        <h1 class="hero__title">Bartender<br>Settlement</h1>
         <p class="hero__subtitle">Multi-venue bar settlement manager with till float logic, preset bartenders, receipt preview, and JSON import/export.</p>
       </div>
       <span class="badge">Local-only · History in browser</span>
@@ -746,6 +747,20 @@
      */
     (() => {
       'use strict';
+
+      /* ─────────────────────────────────────────────────
+         EMAILJS CONFIG
+         Replace these four values with your own from
+         https://dashboard.emailjs.com — see setup guide
+         at the bottom of this file.
+      ───────────────────────────────────────────────── */
+
+      const EMAILJS_CONFIG = Object.freeze({
+        PUBLIC_KEY:          'YOUR_PUBLIC_KEY',
+        SERVICE_ID:          'YOUR_SERVICE_ID',
+        TEMPLATE_BARTENDER:  'YOUR_TEMPLATE_BARTENDER_ID',
+        TEMPLATE_OFFICE:     'YOUR_TEMPLATE_OFFICE_ID',
+      });
 
       /* ─────────────────────────────────────────────────
          CONSTANTS
@@ -1192,20 +1207,83 @@
 
       /* ─────────────────────────────────────────────────
          EMAIL
-         Generates mailto: URIs and navigates to them.
+         Sends via EmailJS. Falls back to a warning if
+         credentials are not yet configured.
       ───────────────────────────────────────────────── */
 
       const Email = {
-        bartenderCopy() {
-          const email = DOM.val('bartenderEmail');
-          if (!email) { alert('No bartender email entered.'); return; }
-          const session = Storage.getSession() ?? {};
-          const subject = encodeURIComponent(`Settlement Receipt – ${session.event ?? 'Shift'}`);
-          const body    = encodeURIComponent($('js-receipt-preview').textContent);
-          location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+        /** Returns true if the config placeholders have been replaced. */
+        _isConfigured() {
+          return !Object.values(EMAILJS_CONFIG).some((v) => v.startsWith('YOUR_'));
         },
 
-        officeReport() {
+        /** Shows a friendly setup reminder instead of a cryptic error. */
+        _warnNotConfigured() {
+          alert(
+            'EmailJS is not configured yet.\n\n' +
+            'Open the file in a text editor, find EMAILJS_CONFIG near the top of the <script>, ' +
+            'and replace the four YOUR_… placeholders with your real keys from dashboard.emailjs.com.\n\n' +
+            'See the setup guide comments at the very bottom of the file.'
+          );
+        },
+
+        /**
+         * Wraps emailjs.send() with consistent loading feedback and error handling.
+         * @param {string} templateId
+         * @param {object} params - template variables
+         * @param {string} successMsg
+         */
+        async _send(templateId, params, successMsg) {
+          if (!Email._isConfigured()) { Email._warnNotConfigured(); return; }
+          try {
+            await emailjs.send(EMAILJS_CONFIG.SERVICE_ID, templateId, params);
+            alert(`✅ ${successMsg}`);
+          } catch (err) {
+            console.error('[EmailJS] Send failed:', err);
+            alert(
+              `❌ Email failed to send.\n\nError: ${err?.text ?? err?.message ?? JSON.stringify(err)}\n\n` +
+              'Check your EmailJS Service ID, Template ID, and that the service is connected.'
+            );
+          }
+        },
+
+        /** Sends the settlement receipt to the bartender. */
+        async bartenderCopy() {
+          const toEmail = DOM.val('bartenderEmail');
+          if (!toEmail) { alert('No bartender email entered.'); return; }
+
+          const session = Storage.getSession() ?? {};
+          const calc    = state.lastCalc ?? APP.liveCalculate();
+          const receipt = $('js-receipt-preview').textContent;
+
+          await Email._send(
+            EMAILJS_CONFIG.TEMPLATE_BARTENDER,
+            {
+              to_email:       toEmail,
+              to_name:        DOM.val('bartenderName') || 'Team',
+              venue:          session.venue  || '—',
+              event:          session.event  || '—',
+              date:           session.date   || '—',
+              station:        DOM.val('station') || '—',
+              role:           DOM.val('staffRole') || '—',
+              payment_method: DOM.val('paymentMethod'),
+              final_pay:      fmt(calc.finalPay),
+              tips:           fmt(calc.tips),
+              venue_cut:      fmt(calc.venueCutAmount),
+              tip_payout:     fmt(calc.tipPayout),
+              wage:           fmt(calc.wage),
+              adjustment:     fmt(calc.adj),
+              till_start:     fmt(calc.tillStart),
+              till_returned:  fmt(calc.tillReturned),
+              till_diff:      fmt(calc.tillDifference),
+              receipt_body:   receipt,
+            },
+            `Receipt sent to ${toEmail}`
+          );
+        },
+
+        /** Sends the full night summary report to the office. */
+        async officeReport() {
           const session = Storage.getSession();
           if (!session?.officeEmail) { alert('Office email is missing in session setup.'); return; }
 
@@ -1217,30 +1295,28 @@
 
           const total = (key) => sessionItems.reduce((acc, b) => acc + Number(b[key] ?? 0), 0);
 
-          const lines = [
-            'NIGHT REPORT',
-            '',
-            `Venue: ${session.venue || '—'}`,
-            `Event: ${session.event || '—'}`,
-            `Date:  ${session.date  || '—'}`,
-            '',
-            ...sessionItems.map((x) =>
-              `${x.bartenderName} | ${x.station} | Tips ${fmt(x.tips)} | Cut ${fmt(x.venueCutAmount)} | Wage ${fmt(x.wage)} | Final ${fmt(x.finalPay)} | Till Diff ${fmt(x.tillDifference)}`
-            ),
-            '',
-            'TOTALS',
-            `Settlements:   ${sessionItems.length}`,
-            `Tips:          ${fmt(total('tips'))}`,
-            `Venue Cut:     ${fmt(total('venueCutAmount'))}`,
-            `Paid Out:      ${fmt(total('finalPay'))}`,
-            `Till Diff:     ${fmt(total('tillDifference'))}`,
-          ];
+          const staffLines = sessionItems.map((x) =>
+            `${x.bartenderName} (${x.staffRole ?? '—'}) | ${x.station ?? '—'} | Tips ${fmt(x.tips)} | Cut ${fmt(x.venueCutAmount)} | Wage ${fmt(x.wage)} | Final ${fmt(x.finalPay)} | Till Diff ${fmt(x.tillDifference)}`
+          ).join('\n');
 
-          const subject = encodeURIComponent(`Office Night Report – ${session.event ?? 'Shift'}`);
-          const body    = encodeURIComponent(lines.join('\n'));
-          let url       = `mailto:${encodeURIComponent(session.officeEmail)}?subject=${subject}&body=${body}`;
-          if (session.ccEmail) url += `&cc=${encodeURIComponent(session.ccEmail)}`;
-          location.href = url;
+          await Email._send(
+            EMAILJS_CONFIG.TEMPLATE_OFFICE,
+            {
+              to_email:         session.officeEmail,
+              cc_email:         session.ccEmail ?? '',
+              venue:            session.venue   || '—',
+              event:            session.event   || '—',
+              date:             session.date    || '—',
+              settlement_count: String(sessionItems.length),
+              total_tips:       fmt(total('tips')),
+              total_venue_cut:  fmt(total('venueCutAmount')),
+              total_paid_out:   fmt(total('finalPay')),
+              total_till_diff:  fmt(total('tillDifference')),
+              staff_lines:      staffLines || 'No settlements recorded.',
+              session_notes:    session.notes || '—',
+            },
+            `Night report sent to ${session.officeEmail}`
+          );
         },
       };
 
@@ -1565,6 +1641,10 @@
       ───────────────────────────────────────────────── */
 
       function init() {
+        // Initialise EmailJS with your public key
+        if (typeof emailjs !== 'undefined') {
+          emailjs.init({ publicKey: EMAILJS_CONFIG.PUBLIC_KEY });
+        }
         DOM.setVal('sessionDate', todayLocal());
 
         const session = Storage.getSession();
@@ -1582,6 +1662,90 @@
 
       init();
     })();
+
+    /*
+    ════════════════════════════════════════════════════════════
+      EMAILJS SETUP GUIDE  —  5 minutes, free tier (200/month)
+    ════════════════════════════════════════════════════════════
+
+    STEP 1 — Create account
+      https://www.emailjs.com  →  Sign Up (free)
+
+    STEP 2 — Add an Email Service
+      Dashboard → Email Services → Add New Service
+      Connect Gmail / Outlook / SMTP (whatever you use)
+      Copy the  Service ID  →  paste into EMAILJS_CONFIG.SERVICE_ID
+
+    STEP 3 — Create Template: Bartender Receipt
+      Dashboard → Email Templates → Create New Template
+      Suggested settings:
+        Subject:  Settlement Receipt – {{event}}
+        To Email: {{to_email}}
+        Body (paste this):
+
+          Hi {{to_name}},
+
+          Here is your settlement for {{event}} at {{venue}} on {{date}}.
+
+          Role:           {{role}}
+          Station:        {{station}}
+          Payment Method: {{payment_method}}
+
+          Tips Received:  {{tips}}
+          Venue Cut:      {{venue_cut}}
+          Tip Payout:     {{tip_payout}}
+          Wage:           {{wage}}
+          Adjustment:     {{adjustment}}
+          ─────────────────────────
+          FINAL PAY:      {{final_pay}}
+
+          Till Float:     {{till_start}}
+          Till Returned:  {{till_returned}}
+          Till Diff:      {{till_diff}}
+
+          ──────────────────────────────────────────
+          Full Receipt:
+          {{receipt_body}}
+
+      Save template → copy the  Template ID
+      → paste into EMAILJS_CONFIG.TEMPLATE_BARTENDER
+
+    STEP 4 — Create Template: Office Night Report
+      Dashboard → Email Templates → Create New Template
+      Suggested settings:
+        Subject:  Night Report – {{event}} – {{date}}
+        To Email: {{to_email}}
+        CC:       {{cc_email}}
+        Body (paste this):
+
+          NIGHT REPORT
+          Venue: {{venue}}
+          Event: {{event}}
+          Date:  {{date}}
+
+          STAFF BREAKDOWN
+          {{staff_lines}}
+
+          TOTALS
+          Settlements:  {{settlement_count}}
+          Total Tips:   {{total_tips}}
+          Venue Cut:    {{total_venue_cut}}
+          Paid Out:     {{total_paid_out}}
+          Till Diff:    {{total_till_diff}}
+
+          Session Notes: {{session_notes}}
+
+      Save template → copy the  Template ID
+      → paste into EMAILJS_CONFIG.TEMPLATE_OFFICE
+
+    STEP 5 — Get your Public Key
+      Dashboard → Account → General → Public Key
+      → paste into EMAILJS_CONFIG.PUBLIC_KEY
+
+    STEP 6 — Replace the four placeholders in EMAILJS_CONFIG (top of script)
+      You're done. Emails send silently in the background.
+    ════════════════════════════════════════════════════════════
+    */
   </script>
 </body>
 </html>
