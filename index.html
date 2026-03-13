@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bartender Settlement Pro</title>
+  <title>Venue Settlement Pro</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
@@ -441,7 +441,7 @@
     <header class="hero">
       <div>
         <h1 class="hero__title">Venue<br>Settlement</h1>
-        <p class="hero__subtitle">Multi-venue bar settlement manager with till float logic, preset bartenders, receipt preview, and JSON import/export.</p>
+        <p class="hero__subtitle">Multi-venue staff settlement manager with till float logic, presets, receipt preview, and CSV / JSON export.</p>
       </div>
       <span class="badge">Local-only · History in browser</span>
     </header>
@@ -633,11 +633,12 @@
         <section class="card" aria-labelledby="label-summary">
           <div id="label-summary" class="section-title">Tonight Summary</div>
           <div class="summary-grid" id="js-summary-grid"></div>
-          <div class="action-row">
+          <div class="action-row" style="grid-template-columns:1fr 1fr">
             <button class="btn btn--secondary" id="js-btn-email-office">Email Office Report</button>
+            <button class="btn btn--primary"   id="js-btn-export-csv">⬇ Export CSV for Google Sheets</button>
             <button class="btn btn--ghost"     id="js-btn-export-night">Export Tonight JSON</button>
-            <button class="btn btn--ghost"     id="js-btn-export-history">Export Full History</button>
-            <label class="btn btn--ghost" style="cursor:pointer">
+            <button class="btn btn--ghost"     id="js-btn-export-history">Export Full History JSON</button>
+            <label class="btn btn--ghost" style="cursor:pointer;grid-column:1/-1">
               Import JSON
               <input id="js-import-input" type="file" accept=".json,application/json" style="display:none">
             </label>
@@ -653,7 +654,7 @@
         <section class="card" aria-labelledby="label-calculator">
           <div id="label-calculator" class="section-title">Live Calculator</div>
           <div class="result-box">
-            <p class="result-box__label">Final amount to pay bartender</p>
+            <p class="result-box__label">Final amount to pay staff member</p>
             <div id="js-big-pay" class="big-pay">$0.00</div>
             <div class="mini-grid">
               <div class="metric">
@@ -933,7 +934,7 @@
 
           return [
             '══════════════════════════════════════════',
-            '           BARTENDER SETTLEMENT',
+            '             VENUE SETTLEMENT',
             '══════════════════════════════════════════',
             '',
             row('Venue:',  session.venue || '—'),
@@ -1332,7 +1333,7 @@
           const settlements = Storage.getHistory().filter(
             (x) => x.sessionDate === s.date && x.venue === s.venue && x.event === s.event,
           );
-          downloadJson({ session: s, settlements }, `settlement-${s.date}.json`);
+          downloadJson({ session: s, settlements }, `venue-settlement-${s.date}.json`);
         },
 
         exportHistory() {
@@ -1340,7 +1341,76 @@
             session:     Storage.getSession(),
             presets:     Storage.getPresets(),
             settlements: Storage.getHistory(),
-          }, 'bartender-settlement-history.json');
+          }, 'venue-settlement-history.json');
+        },
+
+        /**
+         * Exports all settlements as a CSV file ready to open in Google Sheets.
+         * Each row = one settlement. Columns cover every saved field.
+         */
+        exportCsv() {
+          const items = Storage.getHistory();
+          if (!items.length) { alert('No settlements to export.'); return; }
+
+          const roleLabels = {
+            bartender:   'Bartender',
+            barback:     'Bar Technician',
+            steward:     'Venue Steward',
+            kitchen:     'Culinary Operative',
+            door:        'Door Supervisor',
+            photographer:'Photographer',
+            production:  'Production Engineer',
+          };
+
+          /** Wraps a cell value in quotes and escapes any internal quotes. */
+          const cell = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+
+          const headers = [
+            'Date', 'Venue', 'Event',
+            'Staff Name', 'Role', 'Station', 'Email',
+            'Payment Method', 'Tip Mode',
+            'Tips ($)', 'Venue Cut %', 'Venue Cut Amount ($)',
+            'Tip Payout ($)', 'Wage ($)', 'Manual Adjustment ($)',
+            'Final Pay ($)', 'Till Start ($)', 'Till Returned ($)',
+            'Till Difference ($)', 'Est. Cash Sales ($)',
+            'Note', 'Saved At',
+          ];
+
+          const rows = items.map((x) => [
+            cell(x.sessionDate),
+            cell(x.venue),
+            cell(x.event),
+            cell(x.bartenderName),
+            cell(roleLabels[x.staffRole] ?? x.staffRole ?? ''),
+            cell(x.station),
+            cell(x.bartenderEmail),
+            cell(x.paymentMethod),
+            cell(x.tipMode),
+            cell(Number(x.tips        ?? 0).toFixed(2)),
+            cell(Number(x.cut         ?? 0).toFixed(2)),
+            cell(Number(x.venueCutAmount ?? 0).toFixed(2)),
+            cell(Number(x.tipPayout   ?? 0).toFixed(2)),
+            cell(Number(x.wage        ?? 0).toFixed(2)),
+            cell(Number(x.adj         ?? 0).toFixed(2)),
+            cell(Number(x.finalPay    ?? 0).toFixed(2)),
+            cell(Number(x.tillStart   ?? 0).toFixed(2)),
+            cell(Number(x.tillReturned ?? 0).toFixed(2)),
+            cell(Number(x.tillDifference ?? 0).toFixed(2)),
+            cell(Number(x.estimatedSales ?? 0).toFixed(2)),
+            cell(x.note),
+            cell(x.savedAt),
+          ].join(','));
+
+          const csv  = [headers.map(cell).join(','), ...rows].join('\r\n');
+          const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' }); // BOM for Excel/Sheets
+          const url  = URL.createObjectURL(blob);
+          const s    = Storage.getSession();
+          const name = s ? `venue-settlement-${s.date}.csv` : 'venue-settlement.csv';
+          const a    = Object.assign(document.createElement('a'), { href: url, download: name });
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
         },
 
         /** @param {Event} event - file input change event */
@@ -1588,6 +1658,7 @@
 
         // ── Summary / IO ─────────────────────────────────
         $('js-btn-email-office'  ).addEventListener('click',  Email.officeReport);
+        $('js-btn-export-csv'    ).addEventListener('click',  DataIO.exportCsv);
         $('js-btn-export-night'  ).addEventListener('click',  DataIO.exportCurrentNight);
         $('js-btn-export-history').addEventListener('click',  DataIO.exportHistory);
         $('js-import-input'      ).addEventListener('change', DataIO.importJson);
